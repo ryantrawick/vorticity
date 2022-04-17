@@ -24,6 +24,8 @@ export function getClosestPointOnLineSegment(Ax, Ay, Bx, By, Px, Py) {
   }
   return { x: Ax + ABx * t, y: Ay + ABy * t }
 }
+export const distanceBetweenPointsLong = (x1, y1, x2, y2) => Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
+export const distanceBetweenPoints = (a, b) => distanceBetweenPoints(a.x, a.y, b.x, b.y)
 // {
 //   Vector2 AP = P - A;       //Vector from A to P   
 //   Vector2 AB = B - A;       //Vector from A to B  

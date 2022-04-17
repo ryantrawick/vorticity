@@ -1,45 +1,137 @@
 import { System, Not } from 'ecsy'
 import * as UTILS from './utils'
 import * as COMPONENTS from './components'
+import { distanceBetweenPointsLong } from './utils'
 //import * as PIXI from './pixi'
 
 Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported)
 
-export class BackgroundFadeSystem extends System {
+export class PlayerDrawSystem extends System {
   execute (delta, time) {
-    //onst color = UTILS.clamp((Math.sin(time * 2) + 1) / 2, 0, 1)
     this.queries.entities.results.forEach(entity => {
-      //renderer.getComponent(Container).container.alpha = Math.max(0, background.getComponent(Container).container.alpha - 0.01)
-      const timer = entity.getMutableComponent(Timer)
-      timer.time += delta
+      const graphics = entity.getComponent(Container).container
 
-      if (timer.time >= timer.duration) {
-        timer.time = 0
-        timer.duration = UTILS.lerp(0.5, 1.5, Math.random())
-
-        entity.getMutableComponent(Renderer).renderer.backgroundColor = UTILS.rgbToHex(Math.random(), Math.random(), Math.random())
-      }
+      graphics.clear()
+      graphics.beginFill(0xffffff)
+      graphics.drawCircle(0, 0, 8)
+      graphics.endFill()
     })
   }
 }
 
-BackgroundFadeSystem.queries = {
+PlayerDrawSystem.queries = {
   entities: {
-    components: [Renderer, Timer]
+    components: [Player, Container]
   }
 }
+
+export class CursorSystem extends System {
+  execute (delta, time) {
+    const input = this.queries.input.results[0].getComponent(InputState).states
+    const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
+
+    this.queries.entities.results.forEach(entity => {
+      const graphics = entity.getMutableComponent(Container).container
+
+      graphics.position.x += input.lookX / (parseInt(renderer.view.style.maxHeight) / 240)
+      graphics.position.y += input.lookY / (parseInt(renderer.view.style.maxHeight) / 240)
+      graphics.position.x = UTILS.clamp(graphics.position.x, 0, renderer.width)
+      graphics.position.y = UTILS.clamp(graphics.position.y, 0, renderer.height)
+
+      graphics.clear()
+      
+      graphics.beginFill(0x000000)
+      graphics.drawCircle(0, 0, 4)
+      graphics.endFill()
+
+      graphics.beginFill(0xffffff)
+      graphics.drawCircle(0, 0, 3)
+      graphics.endFill()
+
+      // graphics.moveTo(4, 1)
+      // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+      // graphics.lineTo(8, 1)
+      //
+      // graphics.moveTo(-4, 1)
+      // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+      // graphics.lineTo(-8, 1)
+      //
+      // graphics.moveTo(1, 4)
+      // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+      // graphics.lineTo(1, 8)
+      //
+      // graphics.moveTo(1, -4)
+      // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+      // graphics.lineTo(1, -8)
+      //
+      //
+      // graphics.moveTo(4, 0)
+      // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+      // graphics.lineTo(8, 0)
+      //
+      // graphics.moveTo(-4, 0)
+      // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+      // graphics.lineTo(-8, 0)
+      //
+      // graphics.moveTo(0, 4)
+      // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+      // graphics.lineTo(0, 8)
+      //
+      // graphics.moveTo(0, -4)
+      // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+      // graphics.lineTo(0, -8)
+    })
+  }
+}
+
+CursorSystem.queries = {
+  entities: {
+    components: [Cursor, Container]
+  },
+  input: {
+    components: [InputState],
+    mandatory: true
+  },
+  renderer: {
+    components: [Renderer],
+    mandatory: true
+  }
+}
+
+// export class BackgroundFadeSystem extends System {
+//   execute (delta, time) {
+//     //onst color = UTILS.clamp((Math.sin(time * 2) + 1) / 2, 0, 1)
+//     this.queries.entities.results.forEach(entity => {
+//       //renderer.getComponent(Container).container.alpha = Math.max(0, background.getComponent(Container).container.alpha - 0.01)
+//       const timer = entity.getMutableComponent(Timer)
+//       timer.time += delta
+//
+//       if (timer.time >= timer.duration) {
+//         timer.time = 0
+//         timer.duration = UTILS.lerp(0.5, 1.5, Math.random())
+//
+//         entity.getMutableComponent(Renderer).renderer.backgroundColor = UTILS.rgbToHex(Math.random(), Math.random(), Math.random())
+//       }
+//     })
+//   }
+// }
+//
+// BackgroundFadeSystem.queries = {
+//   entities: {
+//     components: [Renderer, Timer]
+//   }
+// }
 
 export class ContainerAddSystem extends System {
   execute (delta, time) {
     const mainStage = this.queries.mainStage.results[0].getComponent(Container).container
-    
+
     this.queries.entities.added.forEach(entity => {
       const container = entity.getMutableComponent(Container).container
-      
-      if (mainStage.children.indexOf(container) === -1) {
+
+      if (container !== mainStage) {
         mainStage.addChild(container)
       }
-      //mainStage.addChild(container)
     })
   }
 }
@@ -48,7 +140,8 @@ ContainerAddSystem.queries = {
   entities: {
     components: [Container, Not(MainStage)],
     listen: {
-      added: true }
+      added: true
+    }
   },
   mainStage: {
     components: [Container, MainStage],
@@ -102,49 +195,56 @@ PlayerMovementSystem.queries = {
 export class LinePointSpawnerSystem extends System {
   execute (delta, time) {
     this.queries.entities.results.forEach(entity => {
-      const timer = entity.getMutableComponent(Timer)
-      timer.time += delta
+      const lastPlop = entity.getMutableComponent(Player).lastPlop
+      const container = entity.getComponent(Container).container
 
-      if (timer.time >= timer.duration) {
-        timer.time = 0
-        timer.duration = 0.1
-
-        const lastPlop = entity.getMutableComponent(Player).lastPlop
-        
-        // if (lastPlop) {
-        //   const lastPlopContainer = lastPlop.getComponent(Container).container
-        //   const lastPlopPosition = lastPlopContainer.position
-        //   const lastPlopRenderer = lastPlop.getComponent(Renderer).renderer
-        //
-        //   const line = entity.getMutableComponent(Line).line
-        //   const lineContainer = entity.getMutableComponent(Container).container
-        //   const linePosition = lineContainer.position
-        //
-        //   const point = new PIXI.Graphics()
-        //   point.beginFill(lastPlopRenderer.backgroundColor)
-        //   point.drawCircle(0, 0, 5)
-        //   point.endFill()
-        //
-        //   const pointContainer = new PIXI.Container()
-        //   pointContainer.addChild(point)
-        //   pointContainer.position.set(lastPlopPosition.x, lastPlopPosition.y)
-        //
-        //   line.add(pointContainer)
-        //   lineContainer.addChild(pointContainer)
-        // }
-
+      if (UTILS.distanceBetweenPointsLong(lastPlop.x, lastPlop.y, container.position.x, container.position.y) > entity.getComponent(Player).plopDistance) {
         this.world.createEntity()
           .addComponent(LinePoint, {
-            x: entity.getComponent(Container).container.position.x,
-            y: entity.getComponent(Container).container.position.y
+            x: container.position.x,
+            y: container.position.y
           })
           .addComponent(Timer, {
             time: 0,
             duration: 2.0
           })
 
-        entity.getComponent(Container).container.position.copyTo(lastPlop)
+        container.position.copyTo(lastPlop)
+
+        // entity.getMutableComponent(Player).lastPlop.copy(container.position)
+        //
+        // const line = entity.getMutableComponent(Line).line
+        // const point = entity.getMutableComponent(Point).point
+        //
+        // line.clear()
+        // line.lineStyle(1, 0xffffff, 1)
+        // line.moveTo(lastPlop.x, lastPlop.y)
+        // line.lineTo(container.position.x, container.position.y)
+        //
+        // point.position.copy(container.position)
       }
+
+      // if (lastPlop) {
+      //   const lastPlopContainer = lastPlop.getComponent(Container).container
+      //   const lastPlopPosition = lastPlopContainer.position
+      //   const lastPlopRenderer = lastPlop.getComponent(Renderer).renderer
+      //
+      //   const line = entity.getMutableComponent(Line).line
+      //   const lineContainer = entity.getMutableComponent(Container).container
+      //   const linePosition = lineContainer.position
+      //
+      //   const point = new PIXI.Graphics()
+      //   point.beginFill(lastPlopRenderer.backgroundColor)
+      //   point.drawCircle(0, 0, 5)
+      //   point.endFill()
+      //
+      //   const pointContainer = new PIXI.Container()
+      //   pointContainer.addChild(point)
+      //   pointContainer.position.set(lastPlopPosition.x, lastPlopPosition.y)
+      //
+      //   line.add(pointContainer)
+      //   lineContainer.addChild(pointContainer)
+      // }
     })
   }
 }
@@ -160,30 +260,32 @@ export class LinePointRendererSystem extends System {
     const linePoints = []
 
     this.queries.points.results.forEach(entity => {
-      const line = entity.getComponent(LinePoint)
-
-      linePoints.push(
-        line.startPosition.x,
-        line.startPosition.y,
-        line.endPosition.x,
-        line.endPosition.y
-      )
-      
       const timer = entity.getMutableComponent(Timer)
       timer.time += delta
-      
+
       if (timer.time >= timer.duration) {
         entity.remove()
         return
       }
+
+      const line = entity.getComponent(LinePoint)
+
+      linePoints.push(
+        line.x,
+        line.y
+      )
     })
+
+    if (linePoints < 4) {
+      return
+    }
 
     this.queries.renderer.results.forEach(entity => {
       const graphics = entity.getComponent(Container).container
 
       graphics.clear()
       graphics.beginFill()
-      for (let i = 0; i < linePoints.length; i += 4) {
+      for (let i = 0; i < linePoints.length - 2; i += 2) {
         graphics.moveTo(linePoints[i], linePoints[i + 1])
         graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
         graphics.lineTo(linePoints[i + 2], linePoints[i + 3])
@@ -199,6 +301,28 @@ LinePointRendererSystem.queries = {
   },
   renderer: {
     components: [LinePointRenderer, Container]
+  }
+}
+
+export class ResetInputAxesSystem extends System {
+  execute () {
+    this.queries.controls.results.forEach(entity => {
+      const input = entity.getMutableComponent(InputState)
+
+      Object.keys(input.actions).forEach(action => {
+        const type = input.actions[action].type
+
+        if (type === 'axis') {
+          input.states[action] = 0
+        }
+      })
+    })
+  }
+}
+
+ResetInputAxesSystem.queries = {
+  controls: {
+    components: [InputState],
   }
 }
 
@@ -349,7 +473,7 @@ export class MouseSystem extends System {
           const axis = mouse.actionMapping[action][0] // Only one bind allowed for an axis right now, makes sense I guess
 
           if (mouse.states[axis].moved === false || document.pointerLockElement !== this.queries.renderers.results[0].getComponent(Renderer).renderer.view) {
-            input.states[action] = 0
+            //input.states[action] = 0
             mouse.states[axis].lastMove = 0
             mouse.states[axis].moved = false
             return
@@ -361,7 +485,7 @@ export class MouseSystem extends System {
 
           // input.states[action] = 0 // Move this to a different input clearing system before this
 
-          input.states[action] = mouse.states[axis].lastMove
+          input.states[action] += mouse.states[axis].lastMove
           mouse.states[axis].moved = false
         }
       })
@@ -451,7 +575,7 @@ export class TouchSystem extends System {
           const axis = touch.actionMapping[action][0] // Only one bind allowed for an axis right now, makes sense I guess
 
           if (touch.states[axis].moved === false) {
-            input.states[action] = 0
+            //input.states[action] = 0
             return
           }
 
@@ -459,7 +583,7 @@ export class TouchSystem extends System {
             input.states[action] = 0
           }
 
-          input.states[action] = touch.states[axis].lastMove
+          input.states[action] += touch.states[axis].lastMove
           touch.states[axis].moved = false
         }
       })

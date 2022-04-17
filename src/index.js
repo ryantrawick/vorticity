@@ -22,8 +22,7 @@ Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported
 import * as SYSTEMS from './systems';
 Object.entries(SYSTEMS).forEach(([name, exported]) => window[name] = exported);
 import * as PIXI from './pixi'
-import { LinePointRenderer } from './components'
-import { ContainerAddSystem } from './systems'
+import { ResetInputAxesSystem } from './systems'
 
 let world, stage, renderer, ticker, elapsedTime
 
@@ -46,18 +45,22 @@ function init () {
     .registerComponent(LinePoint)
     .registerComponent(LinePointRenderer)
     .registerComponent(MainStage)
+    .registerComponent(GameState)
+    .registerComponent(Cursor)
 
   world
+    .registerSystem(ResetInputAxesSystem)
     .registerSystem(KeyboardSystem)
     .registerSystem(MouseSystem)
     .registerSystem(TouchSystem)
     .registerSystem(ContainerAddSystem)
+    .registerSystem(CursorSystem)
     .registerSystem(PlayerMovementSystem)
     .registerSystem(LinePointSpawnerSystem)
     .registerSystem(LinePointRendererSystem)
-    //.registerSystem(BackgroundFadeSystem)
+    .registerSystem(PlayerDrawSystem)
 
-  world.createEntity()
+  world.createEntity("input")
     .addComponent(InputState)
     .addComponent(KeyboardState)
     .addComponent(MouseState)
@@ -82,34 +85,43 @@ function init () {
   PIXI.utils.skipHello()
   PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
   PIXI.settings.RESOLUTION = 1
-  renderer = new PIXI.Renderer({ width: 640, height: 480, antialias: false, backgroundAlpha: 0 })
+  renderer = new PIXI.Renderer({ width: 320, height: 240, antialias: false, backgroundAlpha: 0 })
   document.body.appendChild(renderer.view)
-  world.createEntity()
+  world.createEntity("renderer")
     .addComponent(Renderer, { renderer: renderer })
-    .addComponent(Timer)
 
   stage = new PIXI.Container()
-  world.createEntity()
+  world.createEntity("main stage")
     .addComponent(Container, { container: stage })
     .addComponent(MainStage)
   
-  const player = new PIXI.Sprite(PIXI.Texture.WHITE)
-  player.width = 32
-  player.height = 32
-  player.x = 320
-  player.y = 240
-  player.anchor.set(0.5)
+  const player = new PIXI.Graphics()
+  // player.width = 16
+  // player.height = 16
+  player.x = renderer.width / 2
+  player.y = renderer.height / 2
+  //player.anchor.set(0.5)
   //stage.addChild(player)
-  world.createEntity()
+  world.createEntity("player")
     .addComponent(Container, { container: player })
     .addComponent(Player, { lastPlop: player.position.clone() })
     //.addComponent(Timer)
+
+  const cursor = new PIXI.Graphics()
+  cursor.x = renderer.width / 2
+  cursor.y = renderer.height / 2
+  world.createEntity("cursor")
+    .addComponent(Container, { container: cursor })
+    .addComponent(Cursor)
   
   const lineGraphics = new PIXI.Graphics()
   //stage.addChild(lineGraphics)
-  world.createEntity()
+  world.createEntity("line renderer")
     .addComponent(Container, { container: lineGraphics })
     .addComponent(LinePointRenderer)
+
+  world.createEntity("game state")
+    .addComponent(GameState)
 
   ticker = PIXI.Ticker.shared
   ticker.autoStart = false
@@ -150,8 +162,8 @@ function animate (time) {
 }
 
 function fitViewport () {
-  const viewWidth = Math.min(Math.floor(window.innerWidth / 640), Math.floor(window.innerHeight / 480)) * 640
-  const viewHeight = Math.min(Math.floor(window.innerWidth / 640), Math.floor(window.innerHeight / 480)) * 480
+  const viewWidth = Math.min(Math.floor(window.innerWidth / 320), Math.floor(window.innerHeight / 240)) * 320
+  const viewHeight = Math.min(Math.floor(window.innerWidth / 320), Math.floor(window.innerHeight / 240)) * 240
   renderer.view.style.maxWidth = viewWidth + 'px'
   renderer.view.style.maxHeight = viewHeight + 'px'
 }
