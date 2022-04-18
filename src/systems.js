@@ -1,7 +1,6 @@
 import { System, Not } from 'ecsy'
 import * as UTILS from './utils'
 import * as COMPONENTS from './components'
-import { distanceBetweenPointsLong } from './utils'
 //import * as PIXI from './pixi'
 
 Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported)
@@ -35,11 +34,25 @@ export class CursorSystem extends System {
 
       graphics.position.x += input.lookX / (parseInt(renderer.view.style.maxHeight) / 240)
       graphics.position.y += input.lookY / (parseInt(renderer.view.style.maxHeight) / 240)
+
+      if (input.forward.held) {
+        graphics.position.y -= 240 * delta
+      }
+      if (input.back.held) {
+        graphics.position.y += 240 * delta
+      }
+      if (input.left.held) {
+        graphics.position.x -= 240 * delta
+      }
+      if (input.right.held) {
+        graphics.position.x += 240 * delta
+      }
+
       graphics.position.x = UTILS.clamp(graphics.position.x, 0, renderer.width)
       graphics.position.y = UTILS.clamp(graphics.position.y, 0, renderer.height)
 
       graphics.clear()
-      
+
       graphics.beginFill(0x000000)
       graphics.drawCircle(0, 0, 4)
       graphics.endFill()
@@ -151,14 +164,14 @@ ContainerAddSystem.queries = {
 
 export class PlayerMovementSystem extends System {
   execute (delta) {
-    const input = this.queries.input.results[0].getComponent(InputState).states
+    const cursor = this.queries.cursor.results[0].getComponent(Container).container.position
 
     this.queries.entities.results.forEach(entity => {
       const container = entity.getMutableComponent(Container).container
       const velocity = entity.getMutableComponent(Player).velocity
       velocity.set(0, 0)
 
-      if (input.forward.held) {
+      /*if (input.forward.held) {
         velocity.y -= 1
       }
       if (input.back.held) {
@@ -169,11 +182,15 @@ export class PlayerMovementSystem extends System {
       }
       if (input.right.held) {
         velocity.x += 1
-      }
+      }*/
 
-      if (velocity.magnitude() > 0) {
+      cursor.subtract(container.position, velocity)
+
+      if (velocity.magnitude() > entity.getComponent(Player).plopDistance) {
         velocity.normalize(velocity)
         velocity.multiplyScalar(entity.getComponent(Player).speed, velocity)
+      } else {
+        velocity.set(0, 0)
       }
 
       container.position.x += velocity.x * delta
@@ -186,8 +203,8 @@ PlayerMovementSystem.queries = {
   entities: {
     components: [Container, Player]
   },
-  input: {
-    components: [InputState],
+  cursor: {
+    components: [Container, Cursor],
     mandatory: true
   }
 }
@@ -195,6 +212,10 @@ PlayerMovementSystem.queries = {
 export class LinePointSpawnerSystem extends System {
   execute (delta, time) {
     this.queries.entities.results.forEach(entity => {
+      if (entity.getComponent(Player).pectin <= 0) {
+        return
+      }
+
       const lastPlop = entity.getMutableComponent(Player).lastPlop
       const container = entity.getComponent(Container).container
 
@@ -204,12 +225,14 @@ export class LinePointSpawnerSystem extends System {
             x: container.position.x,
             y: container.position.y
           })
-          .addComponent(Timer, {
-            time: 0,
-            duration: 2.0
-          })
+        // .addComponent(Timer, {
+        //   time: 0,
+        //   duration: 2.0
+        // })
 
         container.position.copyTo(lastPlop)
+
+        entity.getMutableComponent(Player).pectin = UTILS.clamp(entity.getComponent(Player).pectin - 1, 0, entity.getComponent(Player).maxPectin)
 
         // entity.getMutableComponent(Player).lastPlop.copy(container.position)
         //
@@ -260,13 +283,13 @@ export class LinePointRendererSystem extends System {
     const linePoints = []
 
     this.queries.points.results.forEach(entity => {
-      const timer = entity.getMutableComponent(Timer)
-      timer.time += delta
-
-      if (timer.time >= timer.duration) {
-        entity.remove()
-        return
-      }
+      // const timer = entity.getMutableComponent(Timer)
+      // timer.time += delta
+      //
+      // if (timer.time >= timer.duration) {
+      //   entity.remove()
+      //   return
+      // }
 
       const line = entity.getComponent(LinePoint)
 
@@ -276,31 +299,94 @@ export class LinePointRendererSystem extends System {
       )
     })
 
+    if (this.queries.player.results[0].getComponent(Player).pectin > 0) {
+      const player = this.queries.player.results[0].getComponent(Container).container
+      linePoints.push(
+        player.position.x,
+        player.position.y
+      )
+    }
+
     if (linePoints < 4) {
       return
     }
 
-    this.queries.renderer.results.forEach(entity => {
-      const graphics = entity.getComponent(Container).container
+    const graphics = this.queries.renderer.results[0].getComponent(Container).container
 
-      graphics.clear()
-      graphics.beginFill()
-      for (let i = 0; i < linePoints.length - 2; i += 2) {
-        graphics.moveTo(linePoints[i], linePoints[i + 1])
-        graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
-        graphics.lineTo(linePoints[i + 2], linePoints[i + 3])
-      }
-      graphics.endFill()
-    })
+    graphics.beginFill()
+    graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+    for (let i = 0; i < linePoints.length - 2; i += 2) {
+      graphics.moveTo(linePoints[i], linePoints[i + 1])
+      graphics.lineTo(linePoints[i + 2], linePoints[i + 3])
+    }
+    graphics.endFill()
   }
 }
 
 LinePointRendererSystem.queries = {
   points: {
-    components: [LinePoint, Timer]
+    components: [LinePoint]
+  },
+  player: {
+    components: [Player, Container],
+    mandatory: true
   },
   renderer: {
-    components: [LinePointRenderer, Container]
+    components: [Renderer, Container],
+    mandatory: true
+  }
+}
+
+export class PectinBarRenderSystem extends System {
+  execute (delta, time) {
+    const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
+    const graphics = this.queries.renderer.results[0].getComponent(Container).container
+
+    this.queries.player.results.forEach(entity => {
+      const player = entity.getComponent(Player)
+
+      const width = (player.pectin / player.maxPectin) * (renderer.width / 2)
+
+      if (width > 0) {
+        graphics.beginFill(0xffffff)
+        graphics.drawRect(
+          renderer.width / 2,
+          renderer.height - (renderer.height / 12),
+          width,
+          renderer.height / 12
+        )
+        graphics.drawRect(
+          (renderer.width / 2) - width,
+          renderer.height - (renderer.height / 12),
+          width,
+          renderer.height / 12
+        )
+        graphics.endFill()
+      }
+    })
+  }
+}
+
+PectinBarRenderSystem.queries = {
+  player: {
+    components: [Player, Container]
+  },
+  renderer: {
+    components: [Renderer, Container],
+    mandatory: true
+  }
+}
+
+export class ClearGraphicsSystem extends System {
+  execute (delta, time) {
+    this.queries.renderer.results[0].getComponent(Container).container.clear()
+  }
+}
+
+ClearGraphicsSystem.queries = {
+  renderer: {
+    components: [Renderer, Container],
+    mandatory: true
   }
 }
 

@@ -22,7 +22,7 @@ Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported
 import * as SYSTEMS from './systems';
 Object.entries(SYSTEMS).forEach(([name, exported]) => window[name] = exported);
 import * as PIXI from './pixi'
-import { ResetInputAxesSystem } from './systems'
+import { ClearGraphicsSystem, PectinBarRenderSystem } from './systems'
 
 let world, stage, renderer, ticker, elapsedTime
 
@@ -43,7 +43,6 @@ function init () {
     .registerComponent(Renderer)
     .registerComponent(Timer)
     .registerComponent(LinePoint)
-    .registerComponent(LinePointRenderer)
     .registerComponent(MainStage)
     .registerComponent(GameState)
     .registerComponent(Cursor)
@@ -53,11 +52,13 @@ function init () {
     .registerSystem(KeyboardSystem)
     .registerSystem(MouseSystem)
     .registerSystem(TouchSystem)
+    .registerSystem(ClearGraphicsSystem)
     .registerSystem(ContainerAddSystem)
     .registerSystem(CursorSystem)
     .registerSystem(PlayerMovementSystem)
     .registerSystem(LinePointSpawnerSystem)
     .registerSystem(LinePointRendererSystem)
+    .registerSystem(PectinBarRenderSystem)
     .registerSystem(PlayerDrawSystem)
 
   world.createEntity("input")
@@ -83,12 +84,15 @@ function init () {
   //document.body.appendChild(renderer.domElement)
   
   PIXI.utils.skipHello()
+  //PIXI.settings.TARGET_FPMS = 0.12
   PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
   PIXI.settings.RESOLUTION = 1
   renderer = new PIXI.Renderer({ width: 320, height: 240, antialias: false, backgroundAlpha: 0 })
   document.body.appendChild(renderer.view)
+  const graphics = new PIXI.Graphics()
   world.createEntity("renderer")
     .addComponent(Renderer, { renderer: renderer })
+    .addComponent(Container, { container: graphics })
 
   stage = new PIXI.Container()
   world.createEntity("main stage")
@@ -107,6 +111,9 @@ function init () {
     .addComponent(Player, { lastPlop: player.position.clone() })
     //.addComponent(Timer)
 
+  world.createEntity()
+    .addComponent(LinePoint, { x: player.position.x, y: player.position.y })
+
   const cursor = new PIXI.Graphics()
   cursor.x = renderer.width / 2
   cursor.y = renderer.height / 2
@@ -114,14 +121,14 @@ function init () {
     .addComponent(Container, { container: cursor })
     .addComponent(Cursor)
   
-  const lineGraphics = new PIXI.Graphics()
+  //const lineGraphics = new PIXI.Graphics()
   //stage.addChild(lineGraphics)
-  world.createEntity("line renderer")
-    .addComponent(Container, { container: lineGraphics })
-    .addComponent(LinePointRenderer)
+  //world.createEntity("line renderer")
+  //  .addComponent(Container, { container: lineGraphics })
+  //  .addComponent(LinePointRenderer)
 
-  world.createEntity("game state")
-    .addComponent(GameState)
+  // world.createEntity("game state")
+  //   .addComponent(GameState)
 
   ticker = PIXI.Ticker.shared
   ticker.autoStart = false
@@ -158,6 +165,7 @@ function animate (time) {
   world.execute(ticker.deltaMS / 1000, elapsedTime)
 
   renderer.render(stage)
+  
   window.requestAnimationFrame(animate)
 }
 

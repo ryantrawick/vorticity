@@ -11,9 +11,11 @@ export class Player extends Component {}
 
 Player.schema = {
   velocity: { type: Types.Ref, default: new PIXI.Point(0, 0) },
-  speed : { type: Types.Number, default: 320 / 2 },
+  speed : { type: Types.Number, default: 240 },
   lastPlop: { type: Types.Ref, default: new PIXI.Point(0, 0) },
-  plopDistance: { type: Types.Number, default: 6 },
+  plopDistance: { type: Types.Number, default: 12 },
+  pectin: { type: Types.Number, default: 24 },
+  maxPectin: { type: Types.Number, default: 24 },
 }
 
 export class Cursor extends TagComponent {}
@@ -35,7 +37,7 @@ LinePoint.schema = {
   y: { type: Types.Number },
 }
 
-export class LinePointRenderer extends TagComponent {}
+// export class LinePointRenderer extends TagComponent {}
 
 export class Timer extends Component {}
 
