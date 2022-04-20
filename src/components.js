@@ -1,11 +1,11 @@
 import { TagComponent, Component, Types } from 'ecsy'
 import * as PIXI from './pixi'
 
-export class GameState extends Component {}
-
-GameState.schema = {
-  drawMode: { type: Types.Boolean, default: true },
-}
+// export class GameState extends Component {}
+//
+// GameState.schema = {
+//   drawMode: { type: Types.Boolean, default: true },
+// }
 
 export class Player extends Component {}
 
@@ -14,11 +14,14 @@ Player.schema = {
   speed : { type: Types.Number, default: 240 },
   lastPlop: { type: Types.Ref, default: new PIXI.Point(0, 0) },
   plopDistance: { type: Types.Number, default: 12 },
-  pectin: { type: Types.Number, default: 100 },
-  maxPectin: { type: Types.Number, default: 100 },
+  pectin: { type: Types.Number, default: 25 },
+  maxPectin: { type: Types.Number, default: 25 },
+  currentLineIndex: { type: Types.Number, default: -1 },
 }
 
 export class Cursor extends TagComponent {}
+
+export class GameTimer extends TagComponent {}
 
 //export class Camera extends TagComponent {}
 

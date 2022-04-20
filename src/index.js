@@ -22,7 +22,8 @@ Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported
 import * as SYSTEMS from './systems';
 Object.entries(SYSTEMS).forEach(([name, exported]) => window[name] = exported);
 import * as PIXI from './pixi'
-import { ClearGraphicsSystem, PectinBarRenderSystem } from './systems'
+import { GameTimer } from './components'
+import { GameTimerRenderSystem } from './systems'
 
 let world, stage, renderer, ticker, elapsedTime
 
@@ -44,8 +45,8 @@ function init () {
     .registerComponent(Timer)
     .registerComponent(LinePoint)
     .registerComponent(MainStage)
-    .registerComponent(GameState)
     .registerComponent(Cursor)
+    .registerComponent(GameTimer)
 
   world
     .registerSystem(ResetInputAxesSystem)
@@ -59,6 +60,7 @@ function init () {
     .registerSystem(LinePointSpawnerSystem)
     .registerSystem(LinePointRendererSystem)
     .registerSystem(PectinBarRenderSystem)
+    .registerSystem(GameTimerRenderSystem)
     .registerSystem(PlayerDrawSystem)
 
   world.createEntity("input")
@@ -110,6 +112,10 @@ function init () {
     .addComponent(Container, { container: player })
     .addComponent(Player, { lastPlop: player.position.clone() })
     //.addComponent(Timer)
+
+  world.createEntity("game timer")
+    .addComponent(GameTimer)
+    .addComponent(Timer, { duration: 12 })
 
   world.createEntity()
     .addComponent(LinePoint, { x: player.position.x, y: player.position.y })
