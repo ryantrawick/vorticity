@@ -1,7 +1,8 @@
 export const roundMod = (num, multiple) => Math.round(num / multiple) * multiple
 export const lerp = (v0, v1, t) => v0 * (1 - t) + v1 * t
+export const inverseLerp = (v0, v1, t) => (t - v0) / (v1 - v0)
 export const easeOutQuint = (x) => 1 - Math.pow(1 - x, 5)
-export const rgbToHex = (r, g, b) => parseInt('0x' + ((1 << 24) + ((r * 255) << 16) + ((g * 255) << 8) + (b * 255)).toString(16).slice(1))
+//export const rgbToHex = (r, g, b) => parseInt('0x' + ((1 << 24) + ((r) << 16) + ((g) << 8) + (b)).toString(16).slice(1))
 export const easeInOutQuint = (x) => x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2
 export const pingPong = (t, l) => l - Math.abs(repeat(t, l * 2) - l)
 export const repeat = (t, l) => clamp(t - Math.floor(t / l) * l, 0.0, l)
@@ -26,6 +27,8 @@ export function getClosestPointOnLineSegment(Ax, Ay, Bx, By, Px, Py) {
 }
 export const distanceBetweenPointsLong = (x1, y1, x2, y2) => Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
 export const distanceBetweenPoints = (a, b) => distanceBetweenPoints(a.x, a.y, b.x, b.y)
+import rgbHex from 'rgb-hex';
+export const rgbToHex = (r, g, b) => rgbHex(r, g, b)
 // {
 //   Vector2 AP = P - A;       //Vector from A to P   
 //   Vector2 AB = B - A;       //Vector from A to B  

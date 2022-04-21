@@ -22,8 +22,8 @@ Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported
 import * as SYSTEMS from './systems';
 Object.entries(SYSTEMS).forEach(([name, exported]) => window[name] = exported);
 import * as PIXI from './pixi'
-import { GameTimer } from './components'
-import { GameTimerRenderSystem } from './systems'
+import { RemovingLineSystem } from './systems'
+import { Removing } from './components'
 
 let world, stage, renderer, ticker, elapsedTime
 
@@ -47,6 +47,7 @@ function init () {
     .registerComponent(MainStage)
     .registerComponent(Cursor)
     .registerComponent(GameTimer)
+    .registerComponent(Removing)
 
   world
     .registerSystem(ResetInputAxesSystem)
@@ -58,9 +59,10 @@ function init () {
     .registerSystem(CursorSystem)
     .registerSystem(PlayerMovementSystem)
     .registerSystem(LinePointSpawnerSystem)
+    .registerSystem(RemovingLineSystem)
     .registerSystem(LinePointRendererSystem)
+    .registerSystem(GameTimerSystem)
     .registerSystem(PectinBarRenderSystem)
-    .registerSystem(GameTimerRenderSystem)
     .registerSystem(PlayerDrawSystem)
 
   world.createEntity("input")
@@ -115,10 +117,15 @@ function init () {
 
   world.createEntity("game timer")
     .addComponent(GameTimer)
-    .addComponent(Timer, { duration: 12 })
+    .addComponent(Timer, { duration: 6 })
 
   world.createEntity()
-    .addComponent(LinePoint, { x: player.position.x, y: player.position.y })
+    .addComponent(LinePoint, {
+      x: player.position.x,
+      y: player.position.y,
+      angle: (Math.random() * 360) * (Math.PI / 180),
+      speed: Math.random() * 50
+    })
 
   const cursor = new PIXI.Graphics()
   cursor.x = renderer.width / 2

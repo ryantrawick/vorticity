@@ -1,9 +1,34 @@
 import { System, Not } from 'ecsy'
 import * as UTILS from './utils'
 import * as COMPONENTS from './components'
+import { Removing } from './components'
+import { easeOutQuint } from './utils'
 //import * as PIXI from './pixi'
 
 Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported)
+
+export class ShooterUpdateSystem extends System {
+  execute (delta, time) {
+    const graphics = this.queries.renderer.results[0].getComponent(Container).container
+
+    this.queries.entities.results.forEach(entity => {
+      graphics.clear()
+      graphics.beginFill(0xffffff)
+      graphics.drawCircle(0, 0, 8)
+      graphics.endFill()
+    })
+  }
+}
+
+ShooterUpdateSystem.queries = {
+  entities: {
+    components: [Shooter, Timer]
+  },
+  renderer: {
+    components: [Renderer, Container],
+    mandatory: true
+  }
+}
 
 export class PlayerDrawSystem extends System {
   execute (delta, time) {
@@ -172,14 +197,8 @@ export class PlayerMovementSystem extends System {
       velocity.set(0, 0)
 
       if (entity.getComponent(Player).pectin <= 0) {
-        //const angle = Math.atan2(closestY - container.position.y, closestX - container.position.x)
-        //const angle2 = Math.atan2(secondClosestY - container.position.y, secondClosestX - container.position.x)
-
         let closestCursorIndex = -1
         let closestCursorDistance = Infinity
-
-        // let closestPlayerIndex = -1
-        // let closestPlayerDistance = Infinity
 
         let index = 0
 
@@ -191,131 +210,50 @@ export class PlayerMovementSystem extends System {
             closestCursorDistance = cursorDistance
           }
 
-          // const playerDistance = UTILS.distanceBetweenPointsLong(container.position.x, container.position.y, point.getComponent(LinePoint).x, point.getComponent(LinePoint).y)
-          //
-          // if (playerDistance < closestPlayerDistance) {
-          //   closestPlayerIndex = index
-          //   closestPlayerDistance = playerDistance
-          // }
-
           index++
         })
 
-        // const closestCursorPoint = this.queries.points.results[closestCursorIndex].getComponent(LinePoint)
-        //
-        // let targetPointIndex
-        //
         let secondClosestCursorIndex = -1
 
         if (closestCursorIndex + 1 > this.queries.points.results.length - 1 || closestCursorIndex - 1 < 0) {
           secondClosestCursorIndex = Math.min(Math.max(closestCursorIndex - 1, 1), Math.min(this.queries.points.results.length - 1, closestCursorIndex + 1))
-          //const secondClosestPoint = this.queries.points.results[secondClosestIndex].getComponent(LinePoint)
-
-          //targetPoint = UTILS.getClosestPointOnLineSegment(secondClosestPoint.x, secondClosestPoint.y, closestCursorPoint.x, closestCursorPoint.y, cursor.x, cursor.y)
-          //targetPointIndex = secondClosestIndex
         } else {
           const nextPoint = this.queries.points.results[closestCursorIndex + 1].getComponent(LinePoint)
           const nextDistance = UTILS.distanceBetweenPointsLong(cursor.x, cursor.y, nextPoint.x, nextPoint.y)
           const previousPoint = this.queries.points.results[closestCursorIndex - 1].getComponent(LinePoint)
           const previousDistance = UTILS.distanceBetweenPointsLong(cursor.x, cursor.y, previousPoint.x, previousPoint.y)
 
-          //const secondClosestPoint = previousDistance < nextDistance ? previousPoint : nextPoint
           secondClosestCursorIndex = previousDistance < nextDistance ? closestCursorIndex - 1 : closestCursorIndex + 1
-
-          //targetPoint = UTILS.getClosestPointOnLineSegment(secondClosestPoint.x, secondClosestPoint.y, closestCursorPoint.x, closestCursorPoint.y, cursor.x, cursor.y)
-          //targetPointIndex = previousDistance < nextDistance ? closestCursorIndex - 1 : closestCursorIndex + 1
         }
 
-        //
-        // targetPointIndex = closestCursorIndex
-        // let targetPoint
-        //
-        // if (closestCursorIndex === closestPlayerIndex) {
-        //   targetPoint = UTILS.getClosestPointOnLineSegment(nextPlayerPoint.x, nextPlayerPoint.y, playerPoint.x, playerPoint.y, container.position.x, container.position.y)
-        // } else {
-        //   if (closestPlayerIndex > targetPointIndex) {
-        //     targetPointIndex = closestPlayerIndex - 1
-        //   } else if (closestPlayerIndex < targetPointIndex) {
-        //     targetPointIndex = closestPlayerIndex + 1
-        //   }
-        // }
-        //
-        // const playerPoint = this.queries.points.results[closestPlayerIndex].getComponent(LinePoint)
-        // targetPoint = this.queries.points.results[targetPointIndex].getComponent(LinePoint)
-
-        //const targetPoint = UTILS.getClosestPointOnLineSegment(nextPlayerPoint.x, nextPlayerPoint.y, playerPoint.x, playerPoint.y, container.position.x, container.position.y)
-
-        // let secondClosestPlayerIndex = -1
-        //
-        // if (closestPlayerIndex + 1 > this.queries.points.results.length - 1 || closestPlayerIndex - 1 < 0) {
-        //   secondClosestPlayerIndex = Math.min(Math.max(closestPlayerIndex - 1, 1), Math.min(this.queries.points.results.length - 1, closestPlayerIndex + 1))
-        // } else {
-        //   const nextPoint = this.queries.points.results[closestPlayerIndex + 1].getComponent(LinePoint)
-        //   const nextDistance = UTILS.distanceBetweenPointsLong(container.position.x, container.position.y, nextPoint.x, nextPoint.y)
-        //   const previousPoint = this.queries.points.results[closestPlayerIndex - 1].getComponent(LinePoint)
-        //   const previousDistance = UTILS.distanceBetweenPointsLong(container.position.x, container.position.y, previousPoint.x, previousPoint.y)
-        //  
-        //   secondClosestPlayerIndex = previousDistance < nextDistance ? closestPlayerIndex - 1 : closestPlayerIndex + 1
-        // }
-        //
-        // let targetPoint
-        // const secondClosestCursorPoint = this.queries.points.results[secondClosestCursorIndex].getComponent(LinePoint)
-        // const closestPlayerPoint = this.queries.points.results[closestPlayerIndex].getComponent(LinePoint)
-        // const secondClosestPlayerPoint = this.queries.points.results[secondClosestPlayerIndex].getComponent(LinePoint)
-        //
-        // if (closestPlayerIndex === closestCursorIndex) {
-        //   targetPoint = UTILS.getClosestPointOnLineSegment(secondClosestCursorPoint.x, secondClosestCursorPoint.y, closestPlayerPoint.x, closestPlayerPoint.y, container.position.x, container.position.y)
-        // } else {
-        //   if (closestPlayerIndex > closestCursorIndex) {
-        //     const nextPlayerPoint = this.queries.points.results[closestPlayerIndex + 1].getComponent(LinePoint)
-        //     targetPoint = UTILS.getClosestPointOnLineSegment(nextPlayerPoint.x, nextPlayerPoint.y, closestPlayerPoint.x, closestPlayerPoint.y, container.position.x, container.position.y)
-        //   } else if (closestPlayerIndex < closestCursorIndex) {
-        //     const previousPlayerPoint = this.queries.points.results[closestPlayerIndex - 1].getComponent(LinePoint)
-        //     targetPoint = UTILS.getClosestPointOnLineSegment(previousPlayerPoint.x, previousPlayerPoint.y, closestPlayerPoint.x, closestPlayerPoint.y, container.position.x, container.position.y)
-        //   }
-        // }
-
-        let targetPoint
-        //const closestPlayerPoint = this.queries.points.results[closestPlayerIndex].getComponent(LinePoint)
         const closestCursorPoint = this.queries.points.results[closestCursorIndex].getComponent(LinePoint)
         const secondClosestCursorPoint = this.queries.points.results[secondClosestCursorIndex].getComponent(LinePoint)
 
-        let currentPlayerPointIndex = entity.getComponent(Player).currentLineIndex
-        
-        if (currentPlayerPointIndex === -1) {
-          currentPlayerPointIndex = this.queries.points.results.length - 1
-          entity.getMutableComponent(Player).currentLineIndex = currentPlayerPointIndex
+        let player = entity.getMutableComponent(Player)
+
+        if (player.currentLineIndex === -1) {
+          player.currentLineIndex = this.queries.points.results.length - 1
         }
 
-        if (currentPlayerPointIndex > closestCursorIndex) {
-          targetPoint = this.queries.points.results[currentPlayerPointIndex - 1].getComponent(LinePoint)
-        } else if (currentPlayerPointIndex < closestCursorIndex) {
-          targetPoint = this.queries.points.results[currentPlayerPointIndex + 1].getComponent(LinePoint)
+        let targetPoint
+
+        if (player.currentLineIndex > closestCursorIndex) {
+          targetPoint = this.queries.points.results[player.currentLineIndex - 1].getComponent(LinePoint)
+        } else if (player.currentLineIndex < closestCursorIndex) {
+          targetPoint = this.queries.points.results[player.currentLineIndex + 1].getComponent(LinePoint)
         } else {
-          // const nextPlayerPoint = this.queries.points.results[closestPlayerIndex + 1].getComponent(LinePoint)
-          // const previousPlayerPoint = this.queries.points.results[closestPlayerIndex - 1].getComponent(LinePoint)
-          // const nextDistance = UTILS.distanceBetweenPointsLong(container.position.x, container.position.y, nextPlayerPoint.x, nextPlayerPoint.y)
-          // const previousDistance = UTILS.distanceBetweenPointsLong(container.position.x, container.position.y, previousPlayerPoint.x, previousPlayerPoint.y)
-          // targetPoint = previousDistance < nextDistance ? previousPlayerPoint : nextPlayerPoint
-          
           targetPoint = UTILS.getClosestPointOnLineSegment(closestCursorPoint.x, closestCursorPoint.y, secondClosestCursorPoint.x, secondClosestCursorPoint.y, cursor.x, cursor.y)
         }
-        
+
         if (UTILS.distanceBetweenPointsLong(targetPoint.x, targetPoint.y, container.position.x, container.position.y) > 6) {
-          // const angle = UTILS.getAngleBetweenPoints(targetPoint, container.position)
-          // const distance = UTILS.distanceBetweenPoints(targetPoint, container.position)
-          // const speed = distance / (this.speed / 1000)
-          // const x = Math.cos(angle) * speed
-          // const y = Math.sin(angle) * speed
-          // container.setVelocity(x, y)
           const angle = Math.atan2(targetPoint.y - container.position.y, targetPoint.x - container.position.x)
           velocity.set(Math.cos(angle), Math.sin(angle))
           velocity.multiplyScalar(entity.getComponent(Player).plopDistance * 2, velocity)
         } else {
-          if (currentPlayerPointIndex > closestCursorIndex && currentPlayerPointIndex !== 0) {
-            entity.getMutableComponent(Player).currentLineIndex--
-          } else if (currentPlayerPointIndex < closestCursorIndex && currentPlayerPointIndex !== this.queries.points.results.length - 1) {
-            entity.getMutableComponent(Player).currentLineIndex++
+          if (player.currentLineIndex > closestCursorIndex && player.currentLineIndex !== 0) {
+            player.currentLineIndex--
+          } else if (player.currentLineIndex < closestCursorIndex && player.currentLineIndex !== this.queries.points.results.length - 1) {
+            player.currentLineIndex++
           }
         }
 
@@ -345,7 +283,7 @@ PlayerMovementSystem.queries = {
     components: [Container, Player]
   },
   points: {
-    components: [LinePoint]
+    components: [LinePoint, Not(Removing)]
   },
   cursor: {
     components: [Container, Cursor],
@@ -371,51 +309,15 @@ export class LinePointSpawnerSystem extends System {
         this.world.createEntity()
           .addComponent(LinePoint, {
             x: container.position.x,
-            y: container.position.y
+            y: container.position.y,
+            angle: (Math.random() * 360) * (Math.PI / 180),
+            speed: Math.random() * 50
           })
-        // .addComponent(Timer, {
-        //   time: 0,
-        //   duration: 2.0
-        // })
 
         container.position.copyTo(lastPlop)
 
         entity.getMutableComponent(Player).pectin = UTILS.clamp(entity.getComponent(Player).pectin - 1, 0, entity.getComponent(Player).maxPectin)
-
-        // entity.getMutableComponent(Player).lastPlop.copy(container.position)
-        //
-        // const line = entity.getMutableComponent(Line).line
-        // const point = entity.getMutableComponent(Point).point
-        //
-        // line.clear()
-        // line.lineStyle(1, 0xffffff, 1)
-        // line.moveTo(lastPlop.x, lastPlop.y)
-        // line.lineTo(container.position.x, container.position.y)
-        //
-        // point.position.copy(container.position)
       }
-
-      // if (lastPlop) {
-      //   const lastPlopContainer = lastPlop.getComponent(Container).container
-      //   const lastPlopPosition = lastPlopContainer.position
-      //   const lastPlopRenderer = lastPlop.getComponent(Renderer).renderer
-      //
-      //   const line = entity.getMutableComponent(Line).line
-      //   const lineContainer = entity.getMutableComponent(Container).container
-      //   const linePosition = lineContainer.position
-      //
-      //   const point = new PIXI.Graphics()
-      //   point.beginFill(lastPlopRenderer.backgroundColor)
-      //   point.drawCircle(0, 0, 5)
-      //   point.endFill()
-      //
-      //   const pointContainer = new PIXI.Container()
-      //   pointContainer.addChild(point)
-      //   pointContainer.position.set(lastPlopPosition.x, lastPlopPosition.y)
-      //
-      //   line.add(pointContainer)
-      //   lineContainer.addChild(pointContainer)
-      // }
     })
   }
 }
@@ -473,7 +375,7 @@ export class LinePointRendererSystem extends System {
 
 LinePointRendererSystem.queries = {
   points: {
-    components: [LinePoint]
+    components: [LinePoint, Not(Removing)]
   },
   player: {
     components: [Player, Container],
@@ -525,26 +427,55 @@ PectinBarRenderSystem.queries = {
   }
 }
 
-export class GameTimerRenderSystem extends System {
+export class GameTimerSystem extends System {
   execute (delta, time) {
     const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
     const graphics = this.queries.renderer.results[0].getComponent(Container).container
     const player = this.queries.player.results[0].getMutableComponent(Player)
+    const playerContainer = this.queries.player.results[0].getComponent(Container).container
+    const cursor = this.queries.cursor.results[0].getComponent(Container).container
 
     if (player.pectin > 0) {
       return
     }
-    
+
     this.queries.entities.results.forEach(entity => {
       const timer = entity.getMutableComponent(Timer)
 
       timer.time += delta
-      
+
       if (timer.time >= timer.duration) {
         player.pectin = player.maxPectin
+        player.currentLineIndex = -1
+        timer.time = 0
+        // TODO: Add removing component to lines instead of removing entity
+        // for (let i = this.queries.points.results.length - 1; i > -1; i--) {
+        //   this.queries.points.results[i].remove()
+        // }
+        // this.queries.points.results.forEach(point => {
+        //   point
+        //     .addComponent(Removing)
+        //     .addComponent(Timer, { duration: 2.0 })
+        //   console.log(point)
+        // })
+        for (let i = this.queries.points.results.length - 1; i > -1; i--) {
+          this.queries.points.results[i]
+            .addComponent(Removing)
+            .addComponent(Timer, { duration: 1.6 })
+        }
+        cursor.position.x = playerContainer.position.x
+        cursor.position.y = playerContainer.position.y
+        this.world.createEntity()
+          .addComponent(LinePoint, {
+            x: playerContainer.position.x,
+            y: playerContainer.position.y,
+            angle: (Math.random() * 360) * (Math.PI / 180),
+            speed: Math.random() * 50
+          })
+        return
       }
-      
-      const width = (timer.time / timer.duration) * (renderer.width / 2)
+
+      const width = UTILS.inverseLerp(timer.duration, 0, timer.time) * (renderer.width / 2)
 
       if (width > 0) {
         graphics.beginFill(0xffffff)
@@ -566,9 +497,12 @@ export class GameTimerRenderSystem extends System {
   }
 }
 
-GameTimerRenderSystem.queries = {
+GameTimerSystem.queries = {
   entities: {
     components: [Timer, GameTimer]
+  },
+  points: {
+    components: [LinePoint, Not(Removing)]
   },
   player: {
     components: [Player, Container],
@@ -576,6 +510,71 @@ GameTimerRenderSystem.queries = {
   },
   renderer: {
     components: [Renderer, Container],
+    mandatory: true
+  },
+  cursor: {
+    components: [Container, Cursor],
+    mandatory: true
+  }
+}
+
+export class RemovingLineSystem extends System {
+  execute (delta, time) {
+    const graphics = this.queries.renderer.results[0].getComponent(Container).container
+    const player = this.queries.player.results[0].getComponent(Container).container
+
+    let linePoints = []
+    let currentTime = 0
+    let duration = 0
+
+    //this.queries.points.results.forEach(entity => {
+    for (let i = this.queries.points.results.length - 1; i > -1; i--) {
+      const entity = this.queries.points.results[i]
+      const timer = entity.getMutableComponent(Timer)
+      timer.time += delta
+      currentTime = timer.time
+      duration = timer.duration
+
+      if (timer.time >= timer.duration) {
+        entity.remove()
+        return
+      }
+
+      const point = entity.getMutableComponent(LinePoint)
+      //const distance = UTILS.lerp(2.2, 0.6, UTILS.distanceBetweenPointsLong(player.x, player.y, point.x, point.y) / 64)
+      point.x += Math.cos(point.angle + timer.time) * ((point.speed / 2) * UTILS.inverseLerp(duration, 0, currentTime)) * delta
+      point.y += Math.sin(point.angle + timer.time) * ((point.speed / 2) * UTILS.inverseLerp(duration, 0, currentTime)) * delta
+      // add to point.x and point.y by direction to player
+      // const distance = UTILS.distanceBetweenPointsLong(player.x, player.y, point.x, point.y) / 240
+      // const direction = (Math.atan2(player.y - point.y, player.x - point.x) + (Math.PI / 2)) % (Math.PI * 2)
+      // point.x -= Math.cos(direction) * distance * delta
+      // point.y -= Math.sin(direction) * distance * delta
+      linePoints.push(point.x, point.y)
+    }
+    //})
+
+    graphics.beginFill()
+    const lerp = Math.floor(UTILS.inverseLerp(duration, 0, currentTime) * 255)
+    graphics.lineStyle(1, parseInt('0x' + UTILS.rgbToHex(lerp, lerp, lerp)), 1, 0.5, true)
+    for (let i = 0; i < linePoints.length; i += 2) {
+      graphics.moveTo(linePoints[i], linePoints[i + 1])
+      graphics.lineTo(linePoints[i + 2], linePoints[i + 3])
+    }
+    graphics.endFill()
+  }
+}
+
+RemovingLineSystem.queries = {
+  points: {
+    components: [LinePoint, Removing, Timer],
+    mandatory: true
+  },
+  renderer: {
+    components: [Renderer, Container],
+    mandatory: true
+  },
+  player: {
+    components: [Player, Container],
     mandatory: true
   }
 }

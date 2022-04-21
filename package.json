@@ -26,7 +26,8 @@
     "@pixi/ticker": "^6.3.0",
     "@pixi/utils": "^6.1.2",
     "ecsy": "^0.4.2",
-    "joypad.js": "^2.2.5"
+    "joypad.js": "^2.2.5",
+    "rgb-hex": "^4.0.0"
   },
   "devDependencies": {
     "http-server": "^13.0.0",

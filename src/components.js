@@ -7,11 +7,54 @@ import * as PIXI from './pixi'
 //   drawMode: { type: Types.Boolean, default: true },
 // }
 
+export class Removing extends TagComponent {}
+
+export class Shooter extends Component {}
+
+Shooter.schema = {
+  x: { type: Types.Number, default: 0 },
+  y: { type: Types.Number, default: 0 },
+  bulletCount: { type: Types.Number, default: 6 },
+  bulletSpeed: { type: Types.Number, default: 10 },
+  bulletSize: { type: Types.Number, default: 10 },
+  color: { type: Types.Number, default: 0xff0000 },
+  bulletLife: { type: Types.Number, default: 3 },
+  // bulletDamage: { type: Types.Number, default: 10 },
+  // bulletSpread: { type: Types.Number, default: 0 },
+  // bulletSpreadAngle: { type: Types.Number, default: 0 },
+  // bulletSpreadAngleVariance: { type: Types.Number, default: 0 },
+  // bulletSpreadAngleVarianceMax: { type: Types.Number, default: 0 },
+  // bulletSpreadAngleVarianceMin: { type: Types.Number, default: 0 },
+  // bulletSpreadAngleVarianceDirection: { type: Types.Number, default: 0 },
+  // bulletSpreadAngleVarianceDirectionMax: { type: Types.Number, default: 0 },
+  // bulletSpreadAngleVarianceDirectionMin: { type: Types.Number, default: 0 },
+}
+
+export class Bullet extends Component {}
+
+Bullet.schema = {
+  x: { type: Types.Number, default: 0 },
+  y: { type: Types.Number, default: 0 },
+  angle: { type: Types.Number, default: 0 },
+  speed: { type: Types.Number, default: 0 },
+  size: { type: Types.Number, default: 10 },
+  color: { type: Types.Number, default: 0xff0000 },
+  // damage: { type: Types.Number, default: 0 },
+  // spread: { type: Types.Number, default: 0 },
+  // spreadAngle: { type: Types.Number, default: 0 },
+  // spreadAngleVariance: { type: Types.Number, default: 0 },
+  // spreadAngleVarianceMax: { type: Types.Number, default: 0 },
+  // spreadAngleVarianceMin: { type: Types.Number, default: 0 },
+  // spreadAngleVarianceDirection: { type: Types.Number, default: 0 },
+  // spreadAngleVarianceDirectionMax: { type: Types.Number, default: 0 },
+  // spreadAngleVarianceDirectionMin: { type: Types.Number, default: 0 },
+}
+
 export class Player extends Component {}
 
 Player.schema = {
   velocity: { type: Types.Ref, default: new PIXI.Point(0, 0) },
-  speed : { type: Types.Number, default: 240 },
+  speed: { type: Types.Number, default: 240 },
   lastPlop: { type: Types.Ref, default: new PIXI.Point(0, 0) },
   plopDistance: { type: Types.Number, default: 12 },
   pectin: { type: Types.Number, default: 25 },
@@ -38,6 +81,8 @@ export class LinePoint extends Component {}
 LinePoint.schema = {
   x: { type: Types.Number },
   y: { type: Types.Number },
+  angle: { type: Types.Number },
+  speed: { type: Types.Number },
 }
 
 // export class LinePointRenderer extends TagComponent {}
