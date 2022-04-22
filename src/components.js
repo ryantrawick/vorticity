@@ -9,15 +9,43 @@ import * as PIXI from './pixi'
 
 export class Removing extends TagComponent {}
 
+export class Smoke extends Component {}
+
+Smoke.schema = {
+  x: { type: Types.Number, default: 0 },
+  y: { type: Types.Number, default: 0 },
+  vx: { type: Types.Number, default: 0 },
+  vy: { type: Types.Number, default: 0 },
+  acceleration: { type: Types.Number, default: 0.4 },
+  scale: { type: Types.Number, default: 0 },
+  // life: { type: Types.Number, default: 0 },
+  // maxLife: { type: Types.Number, default: 0 },
+  // alpha: { type: Types.Number, default: 0 },
+  // scaleSpeed: { type: Types.Number, default: 0 },
+  // rotation: { type: Types.Number, default: 0 },
+  // rotationSpeed: { type: Types.Number, default: 0 },
+  // color: { type: Types.Number, default: 0 },
+  // colorSpeed: { type: Types.Number, default: 0 },
+  // colorVariance: { type: Types.Number, default: 0 },
+  // colorVarianceSpeed: { type: Types.Number, default: 0 },
+  // colorVarianceMax: { type: Types.Number, default: 0 },
+  // colorVarianceMin: { type: Types.Number, default: 0 },
+  // colorVarianceRange: { type: Types.Number, default: 0 },
+  // colorVarianceSpeedRange: { type: Types.Number, default: 0 },
+  // colorVarianceSpeedMin: { type: Types.Number, default: 0 },
+  // colorVarianceSpeedMax: { type: Types.Number, default: 0 },
+}
+
 export class Shooter extends Component {}
 
 Shooter.schema = {
   x: { type: Types.Number, default: 0 },
   y: { type: Types.Number, default: 0 },
+  radius: { type: Types.Number, default: 6 },
+  color: { type: Types.Number, default: 0xff0000 },
   bulletCount: { type: Types.Number, default: 6 },
   bulletSpeed: { type: Types.Number, default: 10 },
-  bulletSize: { type: Types.Number, default: 10 },
-  color: { type: Types.Number, default: 0xff0000 },
+  bulletRadius: { type: Types.Number, default: 10 },
   bulletLife: { type: Types.Number, default: 3 },
   // bulletDamage: { type: Types.Number, default: 10 },
   // bulletSpread: { type: Types.Number, default: 0 },
@@ -37,7 +65,7 @@ Bullet.schema = {
   y: { type: Types.Number, default: 0 },
   angle: { type: Types.Number, default: 0 },
   speed: { type: Types.Number, default: 0 },
-  size: { type: Types.Number, default: 10 },
+  radius: { type: Types.Number, default: 10 },
   color: { type: Types.Number, default: 0xff0000 },
   // damage: { type: Types.Number, default: 0 },
   // spread: { type: Types.Number, default: 0 },
@@ -60,11 +88,13 @@ Player.schema = {
   pectin: { type: Types.Number, default: 25 },
   maxPectin: { type: Types.Number, default: 25 },
   currentLineIndex: { type: Types.Number, default: -1 },
+  ammo: { type: Types.Number, default: 25 },
+  maxAmmo: { type: Types.Number, default: 25 },
 }
 
 export class Cursor extends TagComponent {}
 
-export class GameTimer extends TagComponent {}
+// export class GameTimer extends TagComponent {}
 
 //export class Camera extends TagComponent {}
 
@@ -130,7 +160,8 @@ export class KeyboardState extends Component {
       forward: ['w', 'ArrowUp'],
       back: ['s', 'ArrowDown'],
       left: ['a', 'ArrowLeft'],
-      right: ['d', 'ArrowRight']
+      right: ['d', 'ArrowRight'],
+      attack: ['Space', ' '],
     }
     this.onKeyDown = (event) => {
       if (!this.states[event.key]) {
