@@ -61,6 +61,28 @@ export const getParallelLine = (Ax, Ay, Bx, By, distance) => {
     y: Ay + normal.y * distance
   }
 }
+export const getPerpendicularLine = (Ax, Ay, Bx, By, distance) => {
+  const normal = getNormalOfLine(Ax, Ay, Bx, By)
+  return {
+    x: Ax - normal.y * distance,
+    y: Ay + normal.x * distance
+  }
+}
+export const getPerpendicularDirection = (Ax, Ay, Bx, By, distance) => {
+  const normal = getNormalOfLine(Ax, Ay, Bx, By)
+  return {
+    x: normal.y * distance,
+    y: -normal.x * distance
+  }
+}
+export const rotateLine90Degrees = (Ax, Ay, Bx, By) => {
+  const dx = Bx - Ax
+  const dy = By - Ay
+  return {
+    x: -dy,
+    y: dx
+  }
+}
 export const getParallelDirectionOfLineFromPoint = (Ax, Ay, Bx, By, Cx, Cy) => {
   const normal = getNormalOfLine(Ax, Ay, Bx, By)
   const dx = Cx - Ax
