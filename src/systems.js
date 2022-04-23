@@ -353,8 +353,8 @@ export class PlayerMovementSystem extends System {
           player.directionY = container.position.y
         }
 
-        const differenceX = finalPoint.x - container.position.x
-        const differenceY = finalPoint.y - container.position.y
+        //const differenceX = finalPoint.x - container.position.x
+        //const differenceY = finalPoint.y - container.position.y
         container.position.x = finalPoint.x
         container.position.y = finalPoint.y
 
@@ -376,27 +376,6 @@ export class PlayerMovementSystem extends System {
 
         player.currentLineIndex = UTILS.clamp(player.currentLineIndex, 1, this.queries.points.results.length - 2)
 
-        // TODO: Set player shoot normal based on input direction to line segment
-        // if (Math.abs(velocity.x) > 0 && Math.abs(velocity.y) > 0) {
-        //   // if (finalPoint === pointOnFirstSegment) {
-        //   //   const bigVx = container.position.x + (velocity.x * 6)
-        //   //   const bigVy = container.position.y + (velocity.y * 6)
-        //   //   const normal = UTILS.getNormalOfLineToPoint(currentPoint.x, currentPoint.y, nextPoint.x, nextPoint.y, bigVx, bigVy)
-        //   //   container.rotation = Math.atan2(normal.y, normal.x)
-        //   // } else {
-        //   //   const bigVx = container.position.x + (velocity.x * 6)
-        //   //   const bigVy = container.position.y + (velocity.y * 6)
-        //   //   const normal = UTILS.getNormalOfLineToPoint(currentPoint.x, currentPoint.y, previousPoint.x, previousPoint.y, bigVx, bigVy)
-        //   //   container.rotation = Math.atan2(normal.y, normal.x)
-        //   // }
-        //   const normal = UTILS.getParallelDirectionOfLineFromPoint(
-        //     currentPoint.x, currentPoint.y,
-        //     nextPoint.x, nextPoint.y,
-        //     tempVx, tempVy
-        //   )
-        //  
-        //   container.rotation = Math.atan2(normal.y, normal.x)
-        // }
         let normal
 
         if (finalPoint === pointOnFirstSegment) {
@@ -405,26 +384,54 @@ export class PlayerMovementSystem extends System {
           normal = UTILS.rotateLine90Degrees(previousPoint.x, previousPoint.y, currentPoint.x, currentPoint.y)
         }
 
-        // if (player.directionX === -1) {
-        //   //normal.x *= -1
-        //   //normal.y *= -1
-        //   player.directionX = container.position.x
-        //   player.directionY = container.position.y
-        // }
-        //normal = UTILS.normalize(normal.x, normal.y)
-        //console.log(normal.x, normal.y)
+        let normalAngle = Math.atan2(normal.y, normal.x)
 
-        player.directionX += differenceX + velocity.x //(velocity.x * Math.abs(normal.x / 2))
-        player.directionY += differenceY + velocity.y //(velocity.y * Math.abs(normal.y / 2))
+        if (!input.attack.held) {
+          const differenceX = UTILS.lerp(
+            container.position.x - (Math.cos(normalAngle) * 4),
+            container.position.x + (Math.cos(normalAngle) * 4),
+            player.directionLerpX
+          ) - player.directionX
+          const differenceY = UTILS.lerp(
+            container.position.y - (Math.sin(normalAngle) * 4),
+            container.position.y + (Math.sin(normalAngle) * 4),
+            player.directionLerpY
+          ) - player.directionY
+          player.directionX += differenceX + velocity.x //(velocity.x * Math.abs(normal.x / 2))
+          player.directionY += differenceY + velocity.y //(velocity.y * Math.abs(normal.y / 2))
 
-        const directionPointOnRotatedLine = UTILS.getClosestPointOnLineSegmentLong(
-          container.position.x - (Math.cos(container.rotation) * 4), container.position.y - (Math.sin(container.rotation) * 4),
-          container.position.x + (Math.cos(container.rotation) * 4), container.position.y + (Math.sin(container.rotation) * 4),
-          player.directionX, player.directionY
-        )
+          const directionPointOnRotatedLine = UTILS.getClosestPointOnLineSegmentLong(
+            container.position.x - (Math.cos(normalAngle) * 4), container.position.y - (Math.sin(normalAngle) * 4),
+            container.position.x + (Math.cos(normalAngle) * 4), container.position.y + (Math.sin(normalAngle) * 4),
+            player.directionX, player.directionY
+          )
 
-        player.directionX = directionPointOnRotatedLine.x
-        player.directionY = directionPointOnRotatedLine.y
+          player.directionLerpX = UTILS.inverseLerp(
+            container.position.x - (Math.cos(normalAngle) * 4),
+            container.position.x + (Math.cos(normalAngle) * 4),
+            directionPointOnRotatedLine.x
+          )
+
+          player.directionLerpY = UTILS.inverseLerp(
+            container.position.y - (Math.sin(normalAngle) * 4),
+            container.position.y + (Math.sin(normalAngle) * 4),
+            directionPointOnRotatedLine.y
+          )
+
+          player.directionX = directionPointOnRotatedLine.x
+          player.directionY = directionPointOnRotatedLine.y
+        } else {
+          player.directionX = UTILS.lerp(
+            container.position.x - (Math.cos(normalAngle) * 4),
+            container.position.x + (Math.cos(normalAngle) * 4),
+            player.directionLerpX
+          )
+          player.directionY = UTILS.lerp(
+            container.position.y - (Math.sin(normalAngle) * 4),
+            container.position.y + (Math.sin(normalAngle) * 4),
+            player.directionLerpY
+          )
+        }
 
         let sideOfLine
 
@@ -432,13 +439,13 @@ export class PlayerMovementSystem extends System {
           sideOfLine = UTILS.getSideOfLine(
             currentPoint.x, currentPoint.y,
             nextPoint.x, nextPoint.y,
-            directionPointOnRotatedLine.x, directionPointOnRotatedLine.y
+            player.directionX, player.directionY
           )
         } else {
           sideOfLine = UTILS.getSideOfLine(
             previousPoint.x, previousPoint.y,
             currentPoint.x, currentPoint.y,
-            directionPointOnRotatedLine.x, directionPointOnRotatedLine.y
+            player.directionX, player.directionY
           )
         }
 
@@ -446,9 +453,12 @@ export class PlayerMovementSystem extends System {
 
         // const graphics = this.queries.renderer.results[0].getComponent(Container).container
         // graphics.beginFill(0x00ff00)
-        // graphics.lineStyle(1, 0xff0000, 1, 0.5, true)
+        // graphics.lineStyle(1, 0x0000ff, 1, 0.5, true)
         // //graphics.moveTo(container.position.x, container.position.y)
         // //graphics.lineTo(container.position.x + (Math.cos(container.rotation) * 8), container.position.y + (Math.sin(container.rotation) * 8))
+        // graphics.moveTo(container.position.x, container.position.y)
+        // graphics.lineTo(container.position.x + (Math.cos(normalAngle) * 8), container.position.y + (Math.sin(normalAngle) * 8))
+        // graphics.lineStyle(1, 0xff0000, 1, 0.5, true)
         // graphics.moveTo(container.position.x - (Math.cos(container.rotation) * 4), container.position.y - (Math.sin(container.rotation) * 4))
         // graphics.lineTo(container.position.x + (Math.cos(container.rotation) * 4), container.position.y + (Math.sin(container.rotation) * 4))
         // graphics.lineStyle(1, 0xff0000, 0, 0.5, true)
@@ -650,12 +660,33 @@ export class SpawnShootersSystem extends System {
     const player = this.queries.player.results[0].getComponent(Player)
     const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
 
-    if (player.pectin < (player.maxPectin / 2)) {
-      for (let i = Math.random() * 6; i > 0; i--) {
+    if (player.pectin < ((player.maxPectin / 3) * 2)) {
+      // TODO: Make this number by pectin times emptied
+      for (let i = Math.ceil(Math.random() * 6); i > 0; i--) {
         const padding = renderer.width / 16
-        // TODO: If close to player, re-roll position
-        const randomPositionX = Math.round(UTILS.lerp(renderer.width - padding, padding, Math.random()))
-        const randomPositionY = Math.round(UTILS.lerp(renderer.height - padding, padding, Math.random()))
+
+        let randomPositionX
+        let randomPositionY
+
+        let iterations = 0
+        while (iterations < 20) {
+          this.queries.points.results.forEach(point => {
+            const pointPosition = point.getComponent(LinePoint)
+            randomPositionX = Math.round(UTILS.lerp(renderer.width - padding, padding, Math.random()))
+            randomPositionY = Math.round(UTILS.lerp(renderer.height - padding, padding, Math.random()))
+
+            if (Math.abs(randomPositionX - pointPosition.x) < 24 && Math.abs(randomPositionY - pointPosition.y) < 24) {
+              randomPositionX = Math.round(UTILS.lerp(renderer.width - padding, padding, Math.random()))
+              randomPositionY = Math.round(UTILS.lerp(renderer.height - padding, padding, Math.random()))
+              iterations = 23
+            }
+            iterations++
+          })
+        }
+
+        if (iterations === 23) {
+          continue
+        }
 
         this.world.createEntity()
           .addComponent(Shooter, {
@@ -705,6 +736,9 @@ SpawnShootersSystem.queries = {
   renderer: {
     components: [Renderer],
     mandatory: true
+  },
+  points: {
+    components: [LinePoint, Not(Removing)]
   }
 }
 

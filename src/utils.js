@@ -1,6 +1,15 @@
 export const roundMod = (num, multiple) => Math.round(num / multiple) * multiple
 export const lerp = (v0, v1, t) => v0 * (1 - t) + v1 * t
+export const lerp2D = (Ax, Ay, Bx, By, t) => {
+  const x = lerp(Ax, Bx, t)
+  const y = lerp(Ay, By, t)
+  return {
+    x: x,
+    y: y
+  }
+}
 export const inverseLerp = (v0, v1, t) => (t - v0) / (v1 - v0)
+export const inverseLerp2D = (Ax, Ay, Bx, By, x, y) => inverseLerp(Ax, Bx, x) + inverseLerp(Ay, By, y)
 export const easeOutQuint = (x) => 1 - Math.pow(1 - x, 5)
 //export const rgbToHex = (r, g, b) => parseInt('0x' + ((1 << 24) + ((r) << 16) + ((g) << 8) + (b)).toString(16).slice(1))
 export const easeInOutQuint = (x) => x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2

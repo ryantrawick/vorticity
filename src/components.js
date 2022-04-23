@@ -92,6 +92,8 @@ Player.schema = {
   maxAmmo: { type: Types.Number, default: 25 },
   directionX: { type: Types.Number, default: -1 },
   directionY: { type: Types.Number, default: -1 },
+  directionLerpX: { type: Types.Number, default: 0.5 },
+  directionLerpY: { type: Types.Number, default: 0.5 },
 }
 
 export class Cursor extends TagComponent {}
