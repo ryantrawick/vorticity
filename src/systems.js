@@ -99,18 +99,25 @@ export class PlayerDrawSystem extends System {
         graphics.beginFill(0xffffff, 1)
         graphics.drawCircle(0, 0, UTILS.lerp(8, 0, player.pectin / player.maxPectin))
         graphics.endFill()
-      }
-      else {
+      } else {
         graphics.beginFill(0xffffff, 0)
         graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
-        graphics.moveTo(0, 0 - 3)
-        graphics.lineTo(7, -5 - 3)
-        graphics.moveTo(7, -5 - 3)
-        graphics.lineTo(0, 14 - 3)
-        graphics.moveTo(0, 14 - 3)
-        graphics.lineTo(-7, -5 - 3)
-        graphics.moveTo(-7, -5 - 3)
-        graphics.lineTo(0, 0 - 3)
+        // graphics.moveTo(0, 0)
+        // graphics.lineTo(7, -5)
+        // graphics.moveTo(7, -5)
+        // graphics.lineTo(0, 14)
+        // graphics.moveTo(0, 14)
+        // graphics.lineTo(-7, -5)
+        // graphics.moveTo(-7, -5)
+        // graphics.lineTo(0, 0)
+        graphics.moveTo(0 - 2, 0)
+        graphics.lineTo(-5 - 2, 7)
+        graphics.moveTo(-5 - 2, 7)
+        graphics.lineTo(14 - 2, 0)
+        graphics.moveTo(14 - 2, 0)
+        graphics.lineTo(-5 - 2, -7)
+        graphics.moveTo(-5 - 2, -7)
+        graphics.lineTo(0 - 2, 0)
         graphics.endFill()
       }
     })
@@ -330,17 +337,24 @@ export class PlayerMovementSystem extends System {
 
         const finalPoint = distanceToSecondSegment < distanceToFirstSegment ? pointOnSecondSegment : pointOnFirstSegment
 
-        const graphics = this.queries.renderer.results[0].getComponent(Container).container
-        graphics.beginFill(0xff0000)
-        graphics.drawCircle(currentPoint.x, currentPoint.y, 5)
-        graphics.endFill()
-        graphics.beginFill(0x00ff00)
-        graphics.drawCircle(nextPoint.x, nextPoint.y, 5)
-        graphics.endFill()
-        graphics.beginFill(0x0000ff)
-        graphics.drawCircle(previousPoint.x, previousPoint.y, 5)
-        graphics.endFill()
+        // const graphics = this.queries.renderer.results[0].getComponent(Container).container
+        // graphics.beginFill(0xff0000)
+        // graphics.drawCircle(currentPoint.x, currentPoint.y, 5)
+        // graphics.endFill()
+        // graphics.beginFill(0x00ff00)
+        // graphics.drawCircle(nextPoint.x, nextPoint.y, 5)
+        // graphics.endFill()
+        // graphics.beginFill(0x0000ff)
+        // graphics.drawCircle(previousPoint.x, previousPoint.y, 5)
+        // graphics.endFill()
 
+        if (player.directionX === -1) {
+          player.directionX = container.position.x
+          player.directionY = container.position.y
+        }
+
+        const differenceX = finalPoint.x - container.position.x
+        const differenceY = finalPoint.y - container.position.y
         container.position.x = finalPoint.x
         container.position.y = finalPoint.y
 
@@ -383,20 +397,63 @@ export class PlayerMovementSystem extends System {
         //  
         //   container.rotation = Math.atan2(normal.y, normal.x)
         // }
+        let normal
 
         if (finalPoint === pointOnFirstSegment) {
-          const normal = UTILS.rotateLine90Degrees(currentPoint.x, currentPoint.y, nextPoint.x, nextPoint.y)
-          container.rotation = Math.atan2(normal.y, normal.x)
+          normal = UTILS.rotateLine90Degrees(currentPoint.x, currentPoint.y, nextPoint.x, nextPoint.y)
         } else {
-          const normal = UTILS.rotateLine90Degrees(previousPoint.x, previousPoint.y, currentPoint.x, currentPoint.y)
-          container.rotation = Math.atan2(normal.y, normal.x)
+          normal = UTILS.rotateLine90Degrees(previousPoint.x, previousPoint.y, currentPoint.x, currentPoint.y)
         }
-        
-        graphics.beginFill(0xff0000)
-        graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
-        graphics.moveTo(container.position.x, container.position.y)
-        graphics.lineTo(container.position.x + (Math.cos(container.rotation) * 8), container.position.y + (Math.sin(container.rotation) * 8))
-        graphics.endFill()
+
+        // if (player.directionX === -1) {
+        //   //normal.x *= -1
+        //   //normal.y *= -1
+        //   player.directionX = container.position.x
+        //   player.directionY = container.position.y
+        // }
+        //normal = UTILS.normalize(normal.x, normal.y)
+        //console.log(normal.x, normal.y)
+
+        player.directionX += differenceX + velocity.x //(velocity.x * Math.abs(normal.x / 2))
+        player.directionY += differenceY + velocity.y //(velocity.y * Math.abs(normal.y / 2))
+
+        const directionPointOnRotatedLine = UTILS.getClosestPointOnLineSegmentLong(
+          container.position.x - (Math.cos(container.rotation) * 4), container.position.y - (Math.sin(container.rotation) * 4),
+          container.position.x + (Math.cos(container.rotation) * 4), container.position.y + (Math.sin(container.rotation) * 4),
+          player.directionX, player.directionY
+        )
+
+        player.directionX = directionPointOnRotatedLine.x
+        player.directionY = directionPointOnRotatedLine.y
+
+        let sideOfLine
+
+        if (finalPoint === pointOnFirstSegment) {
+          sideOfLine = UTILS.getSideOfLine(
+            currentPoint.x, currentPoint.y,
+            nextPoint.x, nextPoint.y,
+            directionPointOnRotatedLine.x, directionPointOnRotatedLine.y
+          )
+        } else {
+          sideOfLine = UTILS.getSideOfLine(
+            previousPoint.x, previousPoint.y,
+            currentPoint.x, currentPoint.y,
+            directionPointOnRotatedLine.x, directionPointOnRotatedLine.y
+          )
+        }
+
+        container.rotation = Math.atan2(normal.y * sideOfLine, normal.x * sideOfLine)
+
+        // const graphics = this.queries.renderer.results[0].getComponent(Container).container
+        // graphics.beginFill(0x00ff00)
+        // graphics.lineStyle(1, 0xff0000, 1, 0.5, true)
+        // //graphics.moveTo(container.position.x, container.position.y)
+        // //graphics.lineTo(container.position.x + (Math.cos(container.rotation) * 8), container.position.y + (Math.sin(container.rotation) * 8))
+        // graphics.moveTo(container.position.x - (Math.cos(container.rotation) * 4), container.position.y - (Math.sin(container.rotation) * 4))
+        // graphics.lineTo(container.position.x + (Math.cos(container.rotation) * 4), container.position.y + (Math.sin(container.rotation) * 4))
+        // graphics.lineStyle(1, 0xff0000, 0, 0.5, true)
+        // graphics.drawCircle(player.directionX, player.directionY, 2)
+        // graphics.endFill()
       } else {
         container.position.x += velocity.x
         container.position.y += velocity.y
@@ -745,7 +802,7 @@ export class UpdateBulletsSystem extends System {
 
       bullet.x += Math.cos(bullet.angle) * bullet.speed * delta
       bullet.y += Math.sin(bullet.angle) * bullet.speed * delta
-      
+
       graphics.drawCircle(bullet.x, bullet.y, bullet.radius)
     })
     graphics.endFill()
@@ -766,7 +823,6 @@ export class PlayerAmmoSystem extends System {
   execute (delta, time) {
     const player = this.queries.player.results[0].getMutableComponent(Player)
 
-    console.log(player.pectin)
     if (player.pectin > 0) {
       return
     }
@@ -781,38 +837,14 @@ export class PlayerAmmoSystem extends System {
     if (input.attack.held) {
       playerTimer.time += delta
       if (playerTimer.time >= playerTimer.duration) {
+        playerTimer.time = 0
         if (player.ammo > 0) {
           player.ammo--
-          const currentPlayerPoint = this.queries.points.results[player.currentLineIndex].getComponent(LinePoint)
-          let vX = playerContainer.position.x
-          let vY = playerContainer.position.y
-          vX += input.lookX / (parseInt(renderer.view.style.maxHeight) / 240)
-          vY += input.lookY / (parseInt(renderer.view.style.maxHeight) / 240)
-
-          if (input.forward.held) {
-            vY -= 240 * delta
-          }
-          if (input.back.held) {
-            vY += 240 * delta
-          }
-          if (input.left.held) {
-            vX -= 240 * delta
-          }
-          if (input.right.held) {
-            vX += 240 * delta
-          }
-          const normal = UTILS.getNormalOfLineToPoint(
-            currentPlayerPoint.x, currentPlayerPoint.y,
-            playerContainer.position.x, playerContainer.position.y,
-            vX, vY
-          )
-          const angle = Math.atan2(normal.y, normal.x)
-
           this.world.createEntity()
             .addComponent(Bullet, {
               x: playerContainer.position.x,
               y: playerContainer.position.y,
-              angle: angle,
+              angle: playerContainer.rotation,
               speed: 240,
               radius: 2,
               color: 0xffffff
@@ -821,7 +853,6 @@ export class PlayerAmmoSystem extends System {
               duration: player.bulletDuration
             })
         }
-        playerTimer.time = 0
       }
     } else if (input.attack.up) {
       playerTimer.time = playerTimer.duration

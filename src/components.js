@@ -90,6 +90,8 @@ Player.schema = {
   currentLineIndex: { type: Types.Number, default: -1 },
   ammo: { type: Types.Number, default: 25 },
   maxAmmo: { type: Types.Number, default: 25 },
+  directionX: { type: Types.Number, default: -1 },
+  directionY: { type: Types.Number, default: -1 },
 }
 
 export class Cursor extends TagComponent {}

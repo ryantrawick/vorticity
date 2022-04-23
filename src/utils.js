@@ -42,6 +42,23 @@ export const getNormalOfLine = (Ax, Ay, Bx, By) => {
     y: dx / length
   }
 }
+export const getNormalOfLine2 = (Ax, Ay, Bx, By) => {
+  const dx = Bx - Ax
+  const dy = By - Ay
+  const length = Math.sqrt(dx * dx + dy * dy)
+  return {
+    x: dy / length,
+    y: -dx / length
+  }
+}
+export const dotProduct = (Ax, Ay, Bx, By) => Ax * Bx + Ay * By
+export const normalize = (x, y) => {
+  const length = Math.sqrt(x * x + y * y)
+  return {
+    x: x / length,
+    y: y / length
+  }
+}
 export const getNormalOfLineToPoint = (Ax, Ay, Bx, By, Cx, Cy) => {
   const dx = Bx - Ax
   const dy = By - Ay

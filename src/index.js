@@ -121,7 +121,7 @@ function init () {
   world.createEntity('player')
     .addComponent(Container, { container: player })
     .addComponent(Player, { lastPlop: player.position.clone() })
-    .addComponent(Timer, { duration: 1 / 5 })
+    .addComponent(Timer, { duration: 1 / 12 })
 
   // world.createEntity("game timer")
   //   .addComponent(GameTimer)
