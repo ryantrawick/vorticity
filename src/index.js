@@ -24,7 +24,13 @@ import * as SYSTEMS from './systems'
 
 Object.entries(SYSTEMS).forEach(([name, exported]) => window[name] = exported)
 import * as PIXI from './pixi'
-import { RemovingLineSystem, SmokeSystem, SpawnShootersSystem, UpdateShootersSystem } from './systems'
+import {
+  PlayerShootSystem,
+  RemovingLineSystem,
+  SmokeSystem,
+  SpawnShootersSystem,
+  UpdateShootersSystem
+} from './systems'
 import { Removing } from './components'
 
 let world, stage, renderer, ticker, elapsedTime
@@ -52,6 +58,7 @@ function init () {
     .registerComponent(Shooter)
     .registerComponent(Bullet)
     .registerComponent(Smoke)
+    .registerComponent(GameTimer)
 
   world
     .registerSystem(ResetInputAxesSystem)
@@ -62,6 +69,7 @@ function init () {
     .registerSystem(ContainerAddSystem)
     .registerSystem(CursorSystem)
     .registerSystem(PlayerMovementSystem)
+    .registerSystem(PlayerShootSystem)
     .registerSystem(SpawnShootersSystem)
     .registerSystem(LinePointSpawnerSystem)
     .registerSystem(RemovingLineSystem)
@@ -69,7 +77,7 @@ function init () {
     .registerSystem(UpdateShootersSystem)
     .registerSystem(UpdateBulletsSystem)
     .registerSystem(SmokeSystem)
-    .registerSystem(PlayerAmmoSystem)
+    .registerSystem(GameTimerSystem)
     .registerSystem(PectinBarRenderSystem)
     .registerSystem(PlayerDrawSystem)
 
@@ -123,9 +131,9 @@ function init () {
     .addComponent(Player, { lastPlop: player.position.clone() })
     .addComponent(Timer, { duration: 1 / 12 })
 
-  // world.createEntity("game timer")
-  //   .addComponent(GameTimer)
-  //   .addComponent(Timer, { duration: 6 })
+  world.createEntity("game timer")
+    .addComponent(GameTimer)
+    .addComponent(Timer, { duration: 12 })
 
   world.createEntity()
     .addComponent(LinePoint, {

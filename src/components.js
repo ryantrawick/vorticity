@@ -98,7 +98,7 @@ Player.schema = {
 
 export class Cursor extends TagComponent {}
 
-// export class GameTimer extends TagComponent {}
+export class GameTimer extends TagComponent {}
 
 //export class Camera extends TagComponent {}
 

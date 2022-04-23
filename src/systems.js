@@ -670,21 +670,26 @@ export class SpawnShootersSystem extends System {
 
         let iterations = 0
         while (iterations < 20) {
-          this.queries.points.results.forEach(point => {
-            const pointPosition = point.getComponent(LinePoint)
-            randomPositionX = Math.round(UTILS.lerp(renderer.width - padding, padding, Math.random()))
-            randomPositionY = Math.round(UTILS.lerp(renderer.height - padding, padding, Math.random()))
-
-            if (Math.abs(randomPositionX - pointPosition.x) < 24 && Math.abs(randomPositionY - pointPosition.y) < 24) {
-              randomPositionX = Math.round(UTILS.lerp(renderer.width - padding, padding, Math.random()))
-              randomPositionY = Math.round(UTILS.lerp(renderer.height - padding, padding, Math.random()))
-              iterations = 23
+          randomPositionX = Math.round(UTILS.lerp(renderer.width - padding, padding, Math.random()))
+          randomPositionY = Math.round(UTILS.lerp(renderer.height - padding, padding, Math.random()))
+          let finished = false
+          for (let j = 0; j < this.queries.points.results.length; j++) {
+            const pointPosition = this.queries.points.results[j].getComponent(LinePoint)
+            //if (Math.abs(randomPositionX - pointPosition.x) < 24 && Math.abs(randomPositionY - pointPosition.y) < 24) {
+            if (UTILS.distanceBetweenPointsLong(randomPositionX, randomPositionY, pointPosition.x, pointPosition.y) < 24) {
+              break
             }
-            iterations++
-          })
+            if (j === this.queries.points.results.length - 1) {
+              finished = true
+            }
+          }
+          if (finished) {
+            break
+          }
+          iterations++
         }
 
-        if (iterations === 23) {
+        if (iterations === 20) {
           continue
         }
 
@@ -818,17 +823,19 @@ export class UpdateBulletsSystem extends System {
     const graphics = this.queries.renderer.results[0].getComponent(Container).container
     const renderer = this.queries.renderer.results[0].getComponent(Renderer)
 
-    graphics.beginFill(0xff0000, 1)
+    graphics.lineStyle(1, 0x000000, 0, 0.5, true)
     this.queries.bullets.results.forEach(entity => {
       const bullet = entity.getMutableComponent(Bullet)
       const timer = entity.getMutableComponent(Timer)
       timer.time += delta
 
+      const padding = renderer.width / 16
+
       if (timer.time >= timer.duration
-        || bullet.x < bullet.radius
-        || bullet.x > renderer.width + bullet.radius
-        || bullet.y < bullet.radius ||
-        bullet.y > renderer.height + bullet.radius) {
+        || bullet.x < bullet.radius - padding
+        || bullet.x > renderer.width + bullet.radius + padding
+        || bullet.y < bullet.radius - padding ||
+        bullet.y > renderer.height + bullet.radius + padding) {
         entity.remove()
       }
 
@@ -837,9 +844,10 @@ export class UpdateBulletsSystem extends System {
       bullet.x += Math.cos(bullet.angle) * bullet.speed * delta
       bullet.y += Math.sin(bullet.angle) * bullet.speed * delta
 
+      graphics.beginFill(bullet.color, 1)
       graphics.drawCircle(bullet.x, bullet.y, bullet.radius)
+      graphics.endFill()
     })
-    graphics.endFill()
   }
 }
 
@@ -853,7 +861,94 @@ UpdateBulletsSystem.queries = {
   }
 }
 
-export class PlayerAmmoSystem extends System {
+export class PlayerShootSystem extends System {
+  execute (delta, time) {
+    const player = this.queries.player.results[0].getMutableComponent(Player)
+
+    if (player.pectin > 0) {
+      return
+    }
+
+    const playerContainer = this.queries.player.results[0].getComponent(Container).container
+    const playerTimer = this.queries.player.results[0].getMutableComponent(Timer)
+    //const cursor = this.queries.cursor.results[0].getComponent(Container).container
+    const input = this.queries.input.results[0].getComponent(InputState).states
+
+    if (input.attack.held) {
+      playerTimer.time += delta
+      if (playerTimer.time >= playerTimer.duration) {
+        playerTimer.time = 0
+        //if (player.ammo > 0) {
+        //player.ammo--
+        this.world.createEntity()
+          .addComponent(Bullet, {
+            x: playerContainer.position.x,
+            y: playerContainer.position.y,
+            angle: playerContainer.rotation,
+            speed: 240,
+            radius: 2,
+            color: 0xffffff
+          })
+          .addComponent(Timer, {
+            duration: 12
+          })
+        //}
+      }
+    } else if (input.attack.up) {
+      playerTimer.time = playerTimer.duration
+    }
+
+    // if (player.ammo <= 0) {
+    //   player.pectin = player.maxPectin
+    //   player.currentLineIndex = -1
+    //   player.ammo = player.maxAmmo
+    //   for (let i = this.queries.points.results.length - 1; i > -1; i--) {
+    //     this.queries.points.results[i]
+    //       .addComponent(Removing)
+    //       .addComponent(Timer, { duration: 1.6 })
+    //   }
+    //   //cursor.position.x = playerContainer.position.x
+    //   //cursor.position.y = playerContainer.position.y
+    //   this.world.createEntity()
+    //     .addComponent(LinePoint, {
+    //       x: playerContainer.position.x,
+    //       y: playerContainer.position.y,
+    //       angle: (Math.random() * 360) * (Math.PI / 180),
+    //       speed: Math.random() * 50
+    //     })
+    //
+    //   const smokeAmount = Math.round(UTILS.lerp(3, 7, Math.random()))
+    //
+    //   for (let j = 0; j < smokeAmount; j++) {
+    //     this.world.createEntity()
+    //       .addComponent(Smoke, {
+    //         x: playerContainer.position.x + (Math.random() * 16) - 8,
+    //         y: playerContainer.position.y + (Math.random() * 16) - 8,
+    //         vx: (Math.random() * 2 - 1) * (Math.random() * 12),
+    //         vy: (Math.random() * 2 - 1) * (Math.random() * 12),
+    //         scale: UTILS.lerp(4, 7, Math.random()),
+    //       })
+    //       .addComponent(Timer, {
+    //         duration: UTILS.lerp(2.5, 4.5, Math.random()),
+    //         time: 0
+    //       })
+    //   }
+    // }
+  }
+}
+
+PlayerShootSystem.queries = {
+  player: {
+    components: [Player, Container, Timer],
+    mandatory: true
+  },
+  input: {
+    components: [InputState],
+    mandatory: true
+  }
+}
+
+export class GameTimerSystem extends System {
   execute (delta, time) {
     const player = this.queries.player.results[0].getMutableComponent(Player)
 
@@ -864,45 +959,22 @@ export class PlayerAmmoSystem extends System {
     const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
     const graphics = this.queries.renderer.results[0].getComponent(Container).container
     const playerContainer = this.queries.player.results[0].getComponent(Container).container
-    const playerTimer = this.queries.player.results[0].getMutableComponent(Timer)
-    //const cursor = this.queries.cursor.results[0].getComponent(Container).container
-    const input = this.queries.input.results[0].getComponent(InputState).states
 
-    if (input.attack.held) {
-      playerTimer.time += delta
-      if (playerTimer.time >= playerTimer.duration) {
-        playerTimer.time = 0
-        if (player.ammo > 0) {
-          player.ammo--
-          this.world.createEntity()
-            .addComponent(Bullet, {
-              x: playerContainer.position.x,
-              y: playerContainer.position.y,
-              angle: playerContainer.rotation,
-              speed: 240,
-              radius: 2,
-              color: 0xffffff
-            })
-            .addComponent(Timer, {
-              duration: player.bulletDuration
-            })
-        }
-      }
-    } else if (input.attack.up) {
-      playerTimer.time = playerTimer.duration
-    }
+    const timer = this.queries.entities.results[0].getMutableComponent(Timer)
+    timer.time += delta
 
-    if (player.ammo <= 0) {
+    if (timer.time >= timer.duration) {
+      timer.time = 0
+      
       player.pectin = player.maxPectin
       player.currentLineIndex = -1
-      player.ammo = player.maxAmmo
+      
       for (let i = this.queries.points.results.length - 1; i > -1; i--) {
         this.queries.points.results[i]
           .addComponent(Removing)
           .addComponent(Timer, { duration: 1.6 })
       }
-      //cursor.position.x = playerContainer.position.x
-      //cursor.position.y = playerContainer.position.y
+      
       this.world.createEntity()
         .addComponent(LinePoint, {
           x: playerContainer.position.x,
@@ -927,10 +999,11 @@ export class PlayerAmmoSystem extends System {
             time: 0
           })
       }
+      
       return
     }
 
-    const width = UTILS.inverseLerp(player.maxAmmo, 0, player.ammo) * (renderer.width / 2)
+    const width = UTILS.inverseLerp(timer.duration, 0, timer.time) * (renderer.width / 2)
 
     if (width > 0) {
       graphics.beginFill(0xffffff)
@@ -951,29 +1024,21 @@ export class PlayerAmmoSystem extends System {
   }
 }
 
-PlayerAmmoSystem.queries = {
-  // entities: {
-  //   components: [Timer, GameTimer]
-  // },
+GameTimerSystem.queries = {
+  entities: {
+    components: [Timer, GameTimer]
+  },
   points: {
     components: [LinePoint, Not(Removing)]
   },
   player: {
-    components: [Player, Container, Timer],
+    components: [Player, Container],
     mandatory: true
   },
   renderer: {
     components: [Renderer, Container],
     mandatory: true
   },
-  // cursor: {
-  //   components: [Container, Cursor],
-  //   mandatory: true
-  // },
-  input: {
-    components: [InputState],
-    mandatory: true
-  }
 }
 
 export class RemovingLineSystem extends System {
