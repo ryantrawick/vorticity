@@ -53,6 +53,7 @@ function init () {
     .registerComponent(GameTimer)
     .registerComponent(GameOver)
     .registerComponent(PlayerBullet)
+    .registerComponent(FrameFlash)
   
   world
     .registerSystem(ResetInputAxesSystem)

@@ -11,17 +11,20 @@ export class Removing extends TagComponent {}
 
 export class PlayerBullet extends TagComponent {}
 
+export class FrameFlash extends TagComponent {}
+
 export class GameOver extends Component {}
 
 GameOver.schema = {
   bulletX: { type: Types.Number, default: 0 },
   bulletY: { type: Types.Number, default: 0 },
-  bulletRadius: { type: Types.Number, default: 0 },
+  //bulletRadius: { type: Types.Number, default: 0 },
   playerX: { type: Types.Number, default: 0 },
   playerY: { type: Types.Number, default: 0 },
-  playerRadius: { type: Types.Number, default: 0 },
-  playerAngle: { type: Types.Number, default: 0 },
+  //playerRadius: { type: Types.Number, default: 0 },
+  // playerAngle: { type: Types.Number, default: 0 },
   killingEnemy: { type: Types.String, default: '' },
+  flashCount: { type: Types.Number, default: 0 },
 }
 
 export class Smoke extends Component {}
