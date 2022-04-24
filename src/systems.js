@@ -1460,8 +1460,7 @@ ClearGraphicsSystem.queries = {
   }
 }
 
-// TODO: This for attack button
-export class ResetInputAxesSystem extends System {
+export class ResetInputSystem extends System {
   execute () {
     this.queries.controls.results.forEach(entity => {
       const input = entity.getMutableComponent(InputState)
@@ -1469,7 +1468,17 @@ export class ResetInputAxesSystem extends System {
       Object.keys(input.actions).forEach(action => {
         const type = input.actions[action].type
 
-        if (type === 'axis') {
+        if (type === 'button') {
+          if (!input.states[action]) {
+            input.states[action] = { down: 0, held: 0, up: 0 }
+          }
+          input.states[action].down = 0
+          input.states[action].held = 0
+          input.states[action].up = 0
+        } else if (type === 'axis') {
+          if (input.states[action] === null) {
+            input.states[action] = 0
+          }
           input.states[action] = 0
         }
       })
@@ -1477,7 +1486,31 @@ export class ResetInputAxesSystem extends System {
   }
 }
 
-ResetInputAxesSystem.queries = {
+ResetInputSystem.queries = {
+  controls: {
+    components: [InputState],
+  }
+}
+
+export class FinalizeInputSystem extends System {
+  execute () {
+    this.queries.controls.results.forEach(entity => {
+      const input = entity.getMutableComponent(InputState)
+
+      Object.keys(input.actions).forEach(action => {
+        const type = input.actions[action].type
+
+        if (type === 'button') {
+          input.states[action].down = input.states[action].down > 0
+          input.states[action].held = input.states[action].held > 0
+          input.states[action].up = input.states[action].up > 0
+        }
+      })
+    })
+  }
+}
+
+FinalizeInputSystem.queries = {
   controls: {
     components: [InputState],
   }
@@ -1539,13 +1572,13 @@ export class KeyboardSystem extends System {
           pollUp += keyboard.states[key].up ? 1 : 0
         }
 
-        if (!input.states[action]) {
-          input.states[action] = { down: false, held: false, up: false }
-        }
+        // if (!input.states[action]) {
+        //   input.states[action] = { down: 0, held: 0, up: 0 }
+        // }
 
-        input.states[action].down = pollDown > 0
-        input.states[action].held = pollHeld > 0
-        input.states[action].up = pollUp > 0
+        input.states[action].down += pollDown // > 0
+        input.states[action].held += pollHeld // > 0
+        input.states[action].up += pollUp // > 0
       })
     })
   }
@@ -1619,13 +1652,13 @@ export class MouseSystem extends System {
             pollUp += mouse.states[button].up ? 1 : 0
           }
 
-          if (!input.states[action]) {
-            input.states[action] = { down: false, held: false, up: false }
-          }
+          // if (!input.states[action]) {
+          //   input.states[action] = { down: 0, held: 0, up: 0 }
+          // }
 
-          input.states[action].down = pollDown > 0
-          input.states[action].held = pollHeld > 0
-          input.states[action].up = pollUp > 0
+          input.states[action].down += pollDown // > 0
+          input.states[action].held += pollHeld // > 0
+          input.states[action].up += pollUp // > 0
         } else if (type === 'axis') {
           const axis = mouse.actionMapping[action][0] // Only one bind allowed for an axis right now, makes sense I guess
 
@@ -1636,9 +1669,9 @@ export class MouseSystem extends System {
             return
           }
 
-          if (input.states[action] === null) {
-            input.states[action] = 0
-          }
+          // if (input.states[action] === null) {
+          //   input.states[action] = 0
+          // }
 
           // input.states[action] = 0 // Move this to a different input clearing system before this
 
@@ -1661,7 +1694,7 @@ MouseSystem.queries = {
 }
 
 export class TouchSystem extends System {
-  execute () {
+  execute (delta, time) {
     this.queries.controls.added.forEach(entity => {
       const touch = entity.getComponent(TouchState)
 
@@ -1679,9 +1712,9 @@ export class TouchSystem extends System {
         }
 
         if (!touch.states[button].checked) {
-          touch.states[button].down = true
-          touch.states[button].held = true
-          touch.states[button].checked = true
+            touch.states[button].down = true
+            touch.states[button].held = true
+            touch.states[button].checked = true
         } else {
           touch.states[button].down = false
         }
@@ -1719,15 +1752,29 @@ export class TouchSystem extends System {
             pollDown += touch.states[button].down ? 1 : 0
             pollHeld += touch.states[button].held ? 1 : 0
             pollUp += touch.states[button].up ? 1 : 0
+
+            const timer = entity.getMutableComponent(Timer)
+            
+            if (pollHeld > 0 && this.queries.player.results[0].getComponent(Player).pectin <= 0) {
+              timer.time += delta
+
+              if (timer.time < timer.duration) {
+                return
+              }
+            }
+            
+            if (pollUp > 0) {
+              timer.time = 0
+            }
           }
 
-          if (!input.states[action]) {
-            input.states[action] = { down: false, held: false, up: false }
-          }
+          // if (!input.states[action]) {
+          //   input.states[action] = { down: 0, held: 0, up: 0 }
+          // }
 
-          input.states[action].down = pollDown > 0
-          input.states[action].held = pollHeld > 0
-          input.states[action].up = pollUp > 0
+          input.states[action].down += pollDown// > 0
+          input.states[action].held += pollHeld// > 0
+          input.states[action].up += pollUp// > 0
         } else if (type === 'axis') {
           const axis = touch.actionMapping[action][0] // Only one bind allowed for an axis right now, makes sense I guess
 
@@ -1736,9 +1783,9 @@ export class TouchSystem extends System {
             return
           }
 
-          if (input.states[action] === null) {
-            input.states[action] = 0
-          }
+          // if (input.states[action] === null) {
+          //   input.states[action] = 0
+          // }
 
           input.states[action] += touch.states[axis].lastMove
           touch.states[axis].moved = false
@@ -1750,8 +1797,12 @@ export class TouchSystem extends System {
 
 TouchSystem.queries = {
   controls: {
-    components: [TouchState, InputState],
+    components: [TouchState, InputState, Timer],
     listen: { added: true }
+  },
+  player: {
+    components: [Player, Timer],
+    mandatory: true
   }
 }
 

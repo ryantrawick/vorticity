@@ -114,8 +114,8 @@ Player.schema = {
   // maxAmmo: { type: Types.Number, default: 25 },
   directionX: { type: Types.Number, default: -1 },
   directionY: { type: Types.Number, default: -1 },
-  directionLerpX: { type: Types.Number, default: 0.5 },
-  directionLerpY: { type: Types.Number, default: 0.5 },
+  directionLerpX: { type: Types.Number, default: 1 },
+  directionLerpY: { type: Types.Number, default: 1 },
   radius: { type: Types.Number, default: 2 },
 }
 
@@ -239,28 +239,38 @@ export class TouchState extends Component {
     this.states = { touchX: { lastMove: 0, moved: false }, touchY: { lastMove: 0, moved: false } }
     this.actionMapping = {
       lookX: ['touchX'],
-      lookY: ['touchY']
+      lookY: ['touchY'],
+      attack: ['touchPress']
     }
     //this.sensitivity = 0.02
     this.onTouchStart = (event) => {
       if (this.previousTouch != null) {
         this.previousTouch = null
       }
+      if (!this.states['touchPress']) { // && event.targetTouches[0].pageX > document.body.clientWidth / 2
+        this.states['touchPress'] = { down: false, held: false, up: false, checked: false }
+      }
     }
     this.onTouchEnd = (event) => {
       if (this.previousTouch != null) {
         this.previousTouch = null
       }
+      if (this.states['touchPress']) {
+        this.states['touchPress'].up = true
+      }
     }
     this.onTouchMove = (event) => {
       if (this.previousTouch == null) {
-        this.previousTouch = event.targetTouches[0]
+        //this.previousTouch = event.targetTouches[0]
+        this.previousTouch = event.touches[event.touches.length - 1]
       }
-      this.states.touchX.lastMove = ((event.targetTouches[0].pageX - this.previousTouch.pageX) || 0)// * this.sensitivity
-      this.states.touchY.lastMove = ((event.targetTouches[0].pageY - this.previousTouch.pageY) || 0)// * this.sensitivity
+      //this.states.touchX.lastMove = ((event.targetTouches[0].pageX - this.previousTouch.pageX) || 0)// * this.sensitivity
+      //this.states.touchY.lastMove = ((event.targetTouches[0].pageY - this.previousTouch.pageY) || 0)// * this.sensitivity
+      this.states.touchX.lastMove = ((event.touches[event.touches.length - 1].pageX - this.previousTouch.pageX) || 0)// * this.sensitivity
+      this.states.touchY.lastMove = ((event.touches[event.touches.length - 1].pageY - this.previousTouch.pageY) || 0)// * this.sensitivity
       this.states.touchX.moved = true
       this.states.touchY.moved = true
-      this.previousTouch = event.targetTouches[0]
+      this.previousTouch = event.touches[event.touches.length - 1]//event.targetTouches[0]
     }
   }
 }

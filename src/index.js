@@ -56,10 +56,11 @@ function init () {
     .registerComponent(FrameFlash)
   
   world
-    .registerSystem(ResetInputAxesSystem)
+    .registerSystem(ResetInputSystem)
     .registerSystem(KeyboardSystem)
     .registerSystem(MouseSystem)
     .registerSystem(TouchSystem)
+    .registerSystem(FinalizeInputSystem)
     .registerSystem(ClearGraphicsSystem)
     .registerSystem(ContainerAddSystem)
     .registerSystem(CursorSystem)
@@ -83,6 +84,9 @@ function init () {
     .addComponent(KeyboardState)
     .addComponent(MouseState)
     .addComponent(TouchState)
+    .addComponent(Timer, {
+      duration: 0.15
+    })
 
   //scene = new THREE.Scene()
 
