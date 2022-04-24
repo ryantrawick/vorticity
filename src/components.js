@@ -9,6 +9,21 @@ import * as PIXI from './pixi'
 
 export class Removing extends TagComponent {}
 
+export class PlayerBullet extends TagComponent {}
+
+export class GameOver extends Component {}
+
+GameOver.schema = {
+  bulletX: { type: Types.Number, default: 0 },
+  bulletY: { type: Types.Number, default: 0 },
+  bulletRadius: { type: Types.Number, default: 0 },
+  playerX: { type: Types.Number, default: 0 },
+  playerY: { type: Types.Number, default: 0 },
+  playerRadius: { type: Types.Number, default: 0 },
+  playerAngle: { type: Types.Number, default: 0 },
+  killingEnemy: { type: Types.String, default: '' },
+}
+
 export class Smoke extends Component {}
 
 Smoke.schema = {
@@ -47,6 +62,8 @@ Shooter.schema = {
   bulletSpeed: { type: Types.Number, default: 10 },
   bulletRadius: { type: Types.Number, default: 10 },
   bulletLife: { type: Types.Number, default: 3 },
+  health: { type: Types.Number, default: 3 },
+  id: { type: Types.String, default: '' },
   // bulletDamage: { type: Types.Number, default: 10 },
   // bulletSpread: { type: Types.Number, default: 0 },
   // bulletSpreadAngle: { type: Types.Number, default: 0 },
@@ -67,6 +84,7 @@ Bullet.schema = {
   speed: { type: Types.Number, default: 0 },
   radius: { type: Types.Number, default: 10 },
   color: { type: Types.Number, default: 0xff0000 },
+  parent: { type: Types.String, default: '' },
   // damage: { type: Types.Number, default: 0 },
   // spread: { type: Types.Number, default: 0 },
   // spreadAngle: { type: Types.Number, default: 0 },
@@ -88,12 +106,13 @@ Player.schema = {
   pectin: { type: Types.Number, default: 25 },
   maxPectin: { type: Types.Number, default: 25 },
   currentLineIndex: { type: Types.Number, default: -1 },
-  ammo: { type: Types.Number, default: 25 },
-  maxAmmo: { type: Types.Number, default: 25 },
+  // ammo: { type: Types.Number, default: 25 },
+  // maxAmmo: { type: Types.Number, default: 25 },
   directionX: { type: Types.Number, default: -1 },
   directionY: { type: Types.Number, default: -1 },
   directionLerpX: { type: Types.Number, default: 0.5 },
   directionLerpY: { type: Types.Number, default: 0.5 },
+  radius: { type: Types.Number, default: 2 },
 }
 
 export class Cursor extends TagComponent {}

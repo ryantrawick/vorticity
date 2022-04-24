@@ -24,14 +24,6 @@ import * as SYSTEMS from './systems'
 
 Object.entries(SYSTEMS).forEach(([name, exported]) => window[name] = exported)
 import * as PIXI from './pixi'
-import {
-  PlayerShootSystem,
-  RemovingLineSystem,
-  SmokeSystem,
-  SpawnShootersSystem,
-  UpdateShootersSystem
-} from './systems'
-import { Removing } from './components'
 
 let world, stage, renderer, ticker, elapsedTime
 
@@ -59,7 +51,9 @@ function init () {
     .registerComponent(Bullet)
     .registerComponent(Smoke)
     .registerComponent(GameTimer)
-
+    .registerComponent(GameOver)
+    .registerComponent(PlayerBullet)
+  
   world
     .registerSystem(ResetInputAxesSystem)
     .registerSystem(KeyboardSystem)
@@ -76,10 +70,12 @@ function init () {
     .registerSystem(LinePointRendererSystem)
     .registerSystem(UpdateShootersSystem)
     .registerSystem(UpdateBulletsSystem)
+    .registerSystem(BulletsCollisionSystem)
     .registerSystem(SmokeSystem)
     .registerSystem(GameTimerSystem)
     .registerSystem(PectinBarRenderSystem)
     .registerSystem(PlayerDrawSystem)
+    .registerSystem(RenderGameOverSystem)
 
   world.createEntity('input')
     .addComponent(InputState)
@@ -107,6 +103,8 @@ function init () {
   //PIXI.settings.TARGET_FPMS = 0.12
   PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST
   PIXI.settings.RESOLUTION = 1
+  // TODO: Replace with loader probably
+  //PIXI.sound.add('round_end', './assets/round_end_crushed.mp3')
   renderer = new PIXI.Renderer({ width: 320, height: 240, antialias: false, backgroundAlpha: 0 })
   document.body.appendChild(renderer.view)
   const graphics = new PIXI.Graphics()

@@ -21,6 +21,7 @@ export * from '@pixi/sprite'
 export * from '@pixi/text-bitmap'
 export * from '@pixi/graphics'
 export * from '@pixi/ticker'
+//export { sound } from '@pixi/sound'
 Renderer.registerPlugin('batch', BatchRenderer)
 Renderer.registerPlugin('interaction', InteractionManager)
 Loader.registerPlugin(BitmapFontLoader)

@@ -27,6 +27,7 @@
     "@pixi/utils": "^6.1.2",
     "ecsy": "^0.4.2",
     "joypad.js": "^2.2.5",
+    "nanoid": "^3.3.3",
     "rgb-hex": "^4.0.0"
   },
   "devDependencies": {
