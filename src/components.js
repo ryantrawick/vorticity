@@ -25,6 +25,7 @@ GameOver.schema = {
   // playerAngle: { type: Types.Number, default: 0 },
   killingEnemy: { type: Types.String, default: '' },
   flashCount: { type: Types.Number, default: 0 },
+  flashCountMax: { type: Types.Number, default: 3 },
 }
 
 export class Smoke extends Component {}

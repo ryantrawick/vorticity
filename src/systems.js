@@ -3,6 +3,7 @@ import * as UTILS from './utils'
 import * as COMPONENTS from './components'
 //import * as PIXI from './pixi'
 import { nanoid } from 'nanoid'
+import { inverseLerpClamped } from './utils'
 
 Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported)
 
@@ -583,7 +584,7 @@ LinePointRendererSystem.queries = {
     components: [LinePoint, Not(Removing)]
   },
   player: {
-    components: [Player, Container],
+    components: [Player, Container, Not(GameOver)],
     mandatory: true
   },
   renderer: {
@@ -850,7 +851,7 @@ export class UpdateBulletsSystem extends System {
               time: 0
             })
         }
-      
+
         this.queries.bullets.results[i].remove()
       }
     }
@@ -875,7 +876,7 @@ export class UpdateBulletsSystem extends System {
       bullet.y += Math.sin(bullet.angle) * bullet.speed * delta
 
       graphics.beginFill(bullet.color, 1)
-      graphics.drawCircle(bullet.x, bullet.y, bullet.radius)
+      graphics.drawCircle(bullet.x, bullet.y, bullet.radius * UTILS.lerp(1, 0.1, UTILS.inverseLerpClamped(timer.duration - 0.1, timer.duration, timer.time)))
       graphics.endFill()
     })
   }
@@ -936,7 +937,7 @@ export class BulletsCollisionSystem extends System {
                       time: 0
                     })
                 }
-                
+
                 this.queries.enemyBullets.results[j].remove()
               }
             }
@@ -957,7 +958,7 @@ export class BulletsCollisionSystem extends System {
                   time: 0
                 })
             }
-            
+
             this.queries.shooters.results[i].remove()
           }
           removeBullet = true // Queue remove, errors out when overlapping enemies
@@ -969,10 +970,17 @@ export class BulletsCollisionSystem extends System {
       }
     })
 
+    let gameOver = false
+
     this.queries.enemyBullets.results.forEach(entity => {
+      if (gameOver) {
+        return
+      }
+
       const bullet = entity.getComponent(Bullet)
 
       if (UTILS.circleCollision(bullet.x, bullet.y, bullet.radius, playerContainer.position.x, playerContainer.position.y, playerRadius)) {
+        gameOver = true
         this.queries.player.results[0].addComponent(GameOver, {
           bulletX: bullet.x,
           bulletY: bullet.y,
@@ -983,6 +991,12 @@ export class BulletsCollisionSystem extends System {
           //playerAngle: playerContainer.rotation,
           killingEnemy: bullet.parent
         })
+        this.world.createEntity()
+          .addComponent(Timer, {
+            duration: 1.6,
+            time: 0
+          })
+          .addComponent(FrameFlash)
         // graphics.lineStyle(1, 0x000000, 0, 0.5, true)
         // graphics.beginFill(0xffffff, 1)
         // graphics.drawRect(0, 0, renderer.width, renderer.height)
@@ -995,6 +1009,10 @@ export class BulletsCollisionSystem extends System {
         //entity.remove()
       }
     })
+
+    if (gameOver) {
+      return
+    }
 
     for (let i = 0; i < this.queries.shooters.results.length; i++) {
       const shooter = this.queries.shooters.results[i].getComponent(Shooter)
@@ -1017,7 +1035,7 @@ export class BulletsCollisionSystem extends System {
               time: 0
             })
         }
-        
+
         this.queries.shooters.results[i].remove()
       }
     }
@@ -1160,6 +1178,10 @@ export class GameTimerSystem extends System {
           .addComponent(Timer, { duration: 1.6 })
       }
 
+      this.queries.shooters.results.forEach(entity => {
+        entity.getMutableComponent(Timer).time = 0
+      })
+
       this.world.createEntity()
         .addComponent(LinePoint, {
           x: playerContainer.position.x,
@@ -1224,6 +1246,9 @@ GameTimerSystem.queries = {
     components: [Renderer, Container],
     mandatory: true
   },
+  shooters: {
+    components: [Shooter, Timer]
+  }
 }
 
 export class RemovingLineSystem extends System {
@@ -1283,52 +1308,44 @@ export class RenderGameOverSystem extends System {
   execute (delta, time) {
     const graphics = this.queries.renderer.results[0].getComponent(Container).container
     const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
-    const gameOver = this.queries.player.results[0].getComponent(GameOver)
-    // const playerContainer = this.queries.player.results[0].getComponent(Container).container
-    // playerContainer.clear()
+    const gameOver = this.queries.player.results[0].getMutableComponent(GameOver)
+    const player = this.queries.player.results[0].getMutableComponent(Player)
+    const playerContainer = this.queries.player.results[0].getComponent(Container).container
 
+    // White background
     graphics.beginFill(0xffffff, 1)
     graphics.lineStyle(1, 0xffffff, 0, 0.5, true)
     graphics.drawRect(0, 0, renderer.width, renderer.height)
     graphics.endFill()
 
-    //graphics.beginFill(0x000000, 1)
-    //graphics.drawCircle(Math.round(gameOver.bulletX), Math.round(gameOver.bulletY), gameOver.bulletRadius)
-    //graphics.drawCircle(Math.round(gameOver.playerX), Math.round(gameOver.playerY), gameOver.playerRadius)
-    // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
-    // const offsetX = gameOver.playerX //Math.cos(gameOver.bulletAngle) * gameOver.bulletRadius
-    // const offsetY = gameOver.playerY //Math.sin(gameOver.bulletAngle) * gameOver.bulletRadius
-    // const graphic = [
-    //   2, 0,
-    //   -7, 7,
-    //   16, 0,
-    //   -7, -7
-    // ]
-    // const graphicRotated = []
-    // for (let i = 0; i < graphic.length; i++) {
-    //   if (i % 2 === 0) {
-    //     graphicRotated.push(graphic[i] * Math.cos(gameOver.playerAngle) - graphic[i + 1] * Math.sin(gameOver.playerAngle))
-    //   } else {
-    //     graphicRotated.push(graphic[i] = graphic[i - 1] * Math.sin(gameOver.playerAngle) + graphic[i] * Math.cos(gameOver.playerAngle))
-    //   }
-    // }
-    // for (let i = 0; i < graphicRotated.length; i += 2) {
-    //   graphics.moveTo(graphicRotated[i] + offsetX, graphicRotated[i + 1] + offsetY)
-    //   if (i + 2 >= graphicRotated.length) {
-    //     graphics.lineTo(graphicRotated[0] + offsetX, graphicRotated[1] + offsetY)
-    //   } else {
-    //     graphics.lineTo(graphicRotated[i + 2] + offsetX, graphicRotated[i + 3] + offsetY)
-    //   }
-    // }
-    // // graphics.moveTo(0 - 2 + offsetX, 0 + offsetY)
-    // // graphics.lineTo(-5 - 2 + offsetX, 7 + offsetY)
-    // // graphics.moveTo(-5 - 2 + offsetX, 7 + offsetY)
-    // // graphics.lineTo(14 - 2 + offsetX, 0 + offsetY)
-    // // graphics.moveTo(14 - 2 + offsetX, 0 + offsetY)
-    // // graphics.lineTo(-5 - 2 + offsetX, -7 + offsetY)
-    // // graphics.moveTo(-5 - 2 + offsetX, -7 + offsetY)
-    // // graphics.lineTo(0 - 2 + offsetX, 0 + offsetY)
-    //graphics.endFill()
+    // Lines
+    const linePoints = []
+
+    this.queries.points.results.forEach(entity => {
+      const line = entity.getMutableComponent(LinePoint)
+
+      //line.x += (line.speed / 20) * Math.cos(line.angle + time) * delta
+      //line.y += (line.speed / 20) * Math.sin(line.angle + time) * delta
+
+      linePoints.push(
+        line.x,
+        line.y
+      )
+    })
+
+    if (linePoints < 4) {
+      return
+    }
+
+    graphics.beginFill()
+    graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+    for (let i = 0; i < linePoints.length - 2; i += 2) {
+      graphics.moveTo(linePoints[i], linePoints[i + 1])
+      graphics.lineTo(linePoints[i + 2], linePoints[i + 3])
+    }
+    graphics.endFill()
+
+    // Death circle red
     graphics.beginFill(0xff0000, 1)
     graphics.lineStyle(1, 0xffffff, 0, 0.5, true)
     const pointBetween = UTILS.lerp2D(gameOver.bulletX, gameOver.bulletY, gameOver.playerX, gameOver.playerY, 0.5)
@@ -1355,6 +1372,52 @@ export class RenderGameOverSystem extends System {
       }
     })
 
+    this.queries.flashes.results.forEach(entity => {
+      const timer = entity.getMutableComponent(Timer)
+      timer.time += delta
+      if (timer.time >= timer.duration) {
+        graphics.beginFill(0x000000, 1)
+        graphics.lineStyle(1, 0xffffff, 0, 0.5, true)
+        graphics.drawRect(0, 0, renderer.width, renderer.height)
+        graphics.endFill()
+
+        gameOver.flashCount++
+
+        if (gameOver.flashCount >= gameOver.flashCountMax) {
+          gameOver.flashCount = 0
+          // Remove shooters and bullets
+          for (let i = this.queries.shooters.results.length - 1; i >= 0; i--) {
+            this.queries.shooters.results[i].remove()
+          }
+          for (let i = this.queries.bullets.results.length - 1; i >= 0; i--) {
+            this.queries.bullets.results[i].remove()
+          }
+          for (let i = this.queries.points.results.length - 1; i >= 0; i--) {
+            this.queries.points.results[i].remove()
+          }
+          // TODO: Reset abilities here
+          player.pectin = player.maxPectin
+          player.currentLineIndex = -1
+          this.queries.gameTimer.results[0].getMutableComponent(Timer).time = 0
+          this.world.createEntity(LinePoint, {
+            x: playerContainer.x,
+            y: playerContainer.y,
+            angle: (Math.random() * 360) * (Math.PI / 180),
+            speed: Math.random() * 50
+          })
+          this.queries.player.results[0].removeComponent(GameOver)
+        } else {
+          this.world.createEntity()
+            .addComponent(Timer, {
+              duration: 0.2,
+              time: 0
+            })
+            .addComponent(FrameFlash)
+        }
+
+        entity.remove()
+      }
+    })
   }
 }
 
@@ -1375,6 +1438,12 @@ RenderGameOverSystem.queries = {
   },
   flashes: {
     components: [FrameFlash, Timer]
+  },
+  gameTimer: {
+    components: [Timer, GameTimer]
+  },
+  points: {
+    components: [LinePoint]
   }
 }
 

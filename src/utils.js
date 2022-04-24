@@ -9,6 +9,10 @@ export const lerp2D = (Ax, Ay, Bx, By, t) => {
   }
 }
 export const inverseLerp = (v0, v1, t) => (t - v0) / (v1 - v0)
+export const inverseLerpClamped = (v0, v1, t) => {
+  const t2 = inverseLerp(v0, v1, t)
+  return Math.min(1, Math.max(0, t2))
+}
 export const inverseLerp2D = (Ax, Ay, Bx, By, x, y) => inverseLerp(Ax, Bx, x) + inverseLerp(Ay, By, y)
 export const easeOutQuint = (x) => 1 - Math.pow(1 - x, 5)
 //export const rgbToHex = (r, g, b) => parseInt('0x' + ((1 << 24) + ((r) << 16) + ((g) << 8) + (b)).toString(16).slice(1))
