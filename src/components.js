@@ -13,6 +13,22 @@ export class PlayerBullet extends TagComponent {}
 
 export class FrameFlash extends TagComponent {}
 
+export class Rotator extends Component {}
+
+Rotator.schema = {
+  speed: { type: Types.Number, default: 0 }, // radians per second
+  amount: { type: Types.Number, default: 0 }, // radians to rotate before dying, may not always be used
+}
+
+// export class Text extends Component {}
+//
+// Text.schema = {
+//   text: { type: Types.String, default: '' },
+//   x: { type: Types.Number, default: 0 },
+//   y: { type: Types.Number, default: 0 },
+//   scale: { type: Types.Number, default: 1 },
+// }
+
 export class GameOver extends Component {}
 
 GameOver.schema = {
@@ -68,6 +84,11 @@ Shooter.schema = {
   bulletLife: { type: Types.Number, default: 3 },
   health: { type: Types.Number, default: 3 },
   id: { type: Types.String, default: '' },
+  angle: { type: Types.Number, default: 0 },
+  timesShot: { type: Types.Number, default: 0 },
+  maxTimesShot: { type: Types.Number, default: -1 },
+  type: { type: Types.Number, default: -1 },
+  cooldown: { type: Types.Number, default: 0 },
   // bulletDamage: { type: Types.Number, default: 10 },
   // bulletSpread: { type: Types.Number, default: 0 },
   // bulletSpreadAngle: { type: Types.Number, default: 0 },
@@ -117,9 +138,20 @@ Player.schema = {
   directionLerpX: { type: Types.Number, default: 1 },
   directionLerpY: { type: Types.Number, default: 1 },
   radius: { type: Types.Number, default: 2 },
+  rounds: { type: Types.Number, default: 0 },
+  upgradeProgress: { type: Types.Number, default: 0 },
+  maxUpgradeProgress: { type: Types.Number, default: 9 },
 }
 
-export class Cursor extends TagComponent {}
+export class TriShot extends TagComponent {}
+
+export class DoubleSided extends TagComponent {}
+
+export class ReflectLine extends TagComponent {}
+
+//export class LineJumping extends TagComponent {}
+
+//export class Cursor extends TagComponent {}
 
 export class GameTimer extends TagComponent {}
 
@@ -148,7 +180,8 @@ export class Timer extends Component {}
 
 Timer.schema = {
   time: { type: Types.Number, default: 0 },
-  duration: { type: Types.Number, default: 0 }
+  duration: { type: Types.Number, default: 0 },
+  cooldown: { type: Types.Number, default: 0 },
 }
 
 export class Container extends Component {}
@@ -188,7 +221,7 @@ export class KeyboardState extends Component {
       back: ['s', 'ArrowDown'],
       left: ['a', 'ArrowLeft'],
       right: ['d', 'ArrowRight'],
-      attack: ['Space', ' '],
+      attack: ['Space', ' ', 'z', 'x', 'c'],
     }
     this.onKeyDown = (event) => {
       if (!this.states[event.key]) {

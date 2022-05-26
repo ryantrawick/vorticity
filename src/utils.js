@@ -23,6 +23,45 @@ export const clamp = (num, min, max) => Math.min(Math.max(num, min), max)
 export const easeOutBack = (t, s = 1) => 1 + (2.70158 * s) * Math.pow(clamp(t, 0, 1) - 1, 3) + (1.70158 * s) * Math.pow(clamp(t, 0, 1) - 1, 2)
 export const easeOutBackNoClamp = (t, s = 1) => 1 + (2.70158 * s) * Math.pow(t - 1, 3) + (1.70158 * s) * Math.pow(t - 1, 2)
 export const radiantToDegree = (rad) => rad * 180 / Math.PI
+export const degreeToRadiant = (deg) => deg * Math.PI / 180
+export const reflectRadiant = (rad) => rad + Math.PI
+export const reflectRadiantFromNormal = (rad, normal) => {
+  const reflected = reflectRadiant(rad)
+  const reflectedNormal = reflectRadiant(normal)
+  return reflected - reflectedNormal
+}
+export const lineCircleCollision = (x1, y1, x2, y2, cx, cy, r) => {
+  // const dx = x2 - x1
+  // const dy = y2 - y1
+  // const a = dx * dx + dy * dy
+  // const b = 2 * (dx * (x1 - cx) + dy * (y1 - cy))
+  // const c = cx * cx + cy * cy
+  // const d = b * b - 4 * a * c
+  // if (d < 0) {
+  //   return false
+  // }
+  // const t = (-b + Math.sqrt(d)) / (2 * a)
+  // if (t < 0 || t > 1) {
+  //   return false
+  // }
+  // const x = x1 + t * dx
+  // const y = y1 + t * dy
+  // const dist = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy))
+  // return dist <= r
+  let ac = [cx - x1, cy - y1]
+  let ab = [x2 - x1, y2 - y1]
+  let ab2 = dot(ab, ab)
+  let acab = dot(ac, ab)
+  let t = acab / ab2
+  t = (t < 0) ? 0 : t
+  t = (t > 1) ? 1 : t
+  let h = [(ab[0] * t + x1) - cx, (ab[1] * t + y1) - cy]
+  let h2 = dot(h, h)
+  return h2 <= r * r
+}
+export const dot = (v1, v2) => {
+  return (v1[0] * v2[0]) + (v1[1] * v2[1])
+}
 export const whichQuadrant = (x, y) => {
   if (x >= 0 && y >= 0) return 1
   if (x < 0 && y >= 0) return 2

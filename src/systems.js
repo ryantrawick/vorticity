@@ -3,26 +3,29 @@ import * as UTILS from './utils'
 import * as COMPONENTS from './components'
 //import * as PIXI from './pixi'
 import { nanoid } from 'nanoid'
-import { inverseLerpClamped } from './utils'
+import { DoubleSided, ReflectLine } from './components'
+//import * as HERSHEY from './hershey'
 
 Object.entries(COMPONENTS).forEach(([name, exported]) => window[name] = exported)
 
-// export class ShooterUpdateSystem extends System {
+// export class RenderTextSystem extends System {
 //   execute (delta, time) {
 //     const graphics = this.queries.renderer.results[0].getComponent(Container).container
 //
 //     this.queries.entities.results.forEach(entity => {
-//       graphics.clear()
-//       graphics.beginFill(0xffffff)
-//       graphics.drawCircle(0, 0, 8)
+//       const text = entity.getComponent(Text)
+//
+//       graphics.beginFill(0xffffff, 0)
+//       graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+//       HERSHEY.FONT_HERSHEY.putText(text.text, { graphics: graphics, x: text.x, y: text.y, scale: text.scale, align: 'center' })
 //       graphics.endFill()
 //     })
 //   }
 // }
 //
-// ShooterUpdateSystem.queries = {
+// RenderTextSystem.queries = {
 //   entities: {
-//     components: [Shooter, Timer]
+//     components: [Text]
 //   },
 //   renderer: {
 //     components: [Renderer, Container],
@@ -110,14 +113,25 @@ export class PlayerDrawSystem extends System {
         // graphics.lineTo(-7, -5)
         // graphics.moveTo(-7, -5)
         // graphics.lineTo(0, 0)
-        graphics.moveTo(0 - 2, 0)
-        graphics.lineTo(-5 - 2, 7)
-        graphics.moveTo(-5 - 2, 7)
-        graphics.lineTo(14 - 2, 0)
-        graphics.moveTo(14 - 2, 0)
-        graphics.lineTo(-5 - 2, -7)
-        graphics.moveTo(-5 - 2, -7)
-        graphics.lineTo(0 - 2, 0)
+        if (!entity.hasComponent(DoubleSided)) {
+          graphics.moveTo(0 - 2, 0)
+          graphics.lineTo(-5 - 2, 7)
+          graphics.moveTo(-5 - 2, 7)
+          graphics.lineTo(14 - 2, 0)
+          graphics.moveTo(14 - 2, 0)
+          graphics.lineTo(-5 - 2, -7)
+          graphics.moveTo(-5 - 2, -7)
+          graphics.lineTo(0 - 2, 0)
+        } else {
+          graphics.moveTo(0, 6)
+          graphics.lineTo(14, 0)
+          graphics.moveTo(14, 0)
+          graphics.lineTo(0, -6)
+          graphics.moveTo(0, -6)
+          graphics.lineTo(-14, 0)
+          graphics.moveTo(-14, 0)
+          graphics.lineTo(0, 6)
+        }
         graphics.drawCircle(0, 0, player.radius)
         graphics.endFill()
       }
@@ -132,92 +146,92 @@ PlayerDrawSystem.queries = {
   }
 }
 
-export class CursorSystem extends System {
-  execute (delta, time) {
-    const input = this.queries.input.results[0].getComponent(InputState).states
-    const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
-
-    this.queries.entities.results.forEach(entity => {
-      const graphics = entity.getMutableComponent(Container).container
-
-      graphics.position.x += input.lookX / (parseInt(renderer.view.style.maxHeight) / 240)
-      graphics.position.y += input.lookY / (parseInt(renderer.view.style.maxHeight) / 240)
-
-      if (input.forward.held) {
-        graphics.position.y -= 240 * delta
-      }
-      if (input.back.held) {
-        graphics.position.y += 240 * delta
-      }
-      if (input.left.held) {
-        graphics.position.x -= 240 * delta
-      }
-      if (input.right.held) {
-        graphics.position.x += 240 * delta
-      }
-
-      graphics.position.x = UTILS.clamp(graphics.position.x, 0, renderer.width)
-      graphics.position.y = UTILS.clamp(graphics.position.y, 0, renderer.height)
-
-      graphics.clear()
-
-      graphics.beginFill(0x000000)
-      graphics.drawCircle(0, 0, 4)
-      graphics.endFill()
-
-      graphics.beginFill(0xffffff)
-      graphics.drawCircle(0, 0, 3)
-      graphics.endFill()
-
-      // graphics.moveTo(4, 1)
-      // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
-      // graphics.lineTo(8, 1)
-      //
-      // graphics.moveTo(-4, 1)
-      // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
-      // graphics.lineTo(-8, 1)
-      //
-      // graphics.moveTo(1, 4)
-      // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
-      // graphics.lineTo(1, 8)
-      //
-      // graphics.moveTo(1, -4)
-      // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
-      // graphics.lineTo(1, -8)
-      //
-      //
-      // graphics.moveTo(4, 0)
-      // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
-      // graphics.lineTo(8, 0)
-      //
-      // graphics.moveTo(-4, 0)
-      // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
-      // graphics.lineTo(-8, 0)
-      //
-      // graphics.moveTo(0, 4)
-      // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
-      // graphics.lineTo(0, 8)
-      //
-      // graphics.moveTo(0, -4)
-      // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
-      // graphics.lineTo(0, -8)
-    })
-  }
-}
-
-CursorSystem.queries = {
-  entities: {
-    components: [Cursor, Container]
-  },
-  input: {
-    components: [InputState],
-    mandatory: true
-  },
-  renderer: {
-    components: [Renderer],
-    mandatory: true
-  }
-}
+// export class CursorSystem extends System {
+//   execute (delta, time) {
+//     const input = this.queries.input.results[0].getComponent(InputState).states
+//     const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
+//
+//     this.queries.entities.results.forEach(entity => {
+//       const graphics = entity.getMutableComponent(Container).container
+//
+//       graphics.position.x += input.lookX / (parseInt(renderer.view.style.maxHeight) / 240)
+//       graphics.position.y += input.lookY / (parseInt(renderer.view.style.maxHeight) / 240)
+//
+//       if (input.forward.held) {
+//         graphics.position.y -= 240 * delta
+//       }
+//       if (input.back.held) {
+//         graphics.position.y += 240 * delta
+//       }
+//       if (input.left.held) {
+//         graphics.position.x -= 240 * delta
+//       }
+//       if (input.right.held) {
+//         graphics.position.x += 240 * delta
+//       }
+//
+//       graphics.position.x = UTILS.clamp(graphics.position.x, 0, renderer.width)
+//       graphics.position.y = UTILS.clamp(graphics.position.y, 0, renderer.height)
+//
+//       graphics.clear()
+//
+//       graphics.beginFill(0x000000)
+//       graphics.drawCircle(0, 0, 4)
+//       graphics.endFill()
+//
+//       graphics.beginFill(0xffffff)
+//       graphics.drawCircle(0, 0, 3)
+//       graphics.endFill()
+//
+//       // graphics.moveTo(4, 1)
+//       // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+//       // graphics.lineTo(8, 1)
+//       //
+//       // graphics.moveTo(-4, 1)
+//       // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+//       // graphics.lineTo(-8, 1)
+//       //
+//       // graphics.moveTo(1, 4)
+//       // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+//       // graphics.lineTo(1, 8)
+//       //
+//       // graphics.moveTo(1, -4)
+//       // graphics.lineStyle(1, 0x000000, 1, 0.5, true)
+//       // graphics.lineTo(1, -8)
+//       //
+//       //
+//       // graphics.moveTo(4, 0)
+//       // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+//       // graphics.lineTo(8, 0)
+//       //
+//       // graphics.moveTo(-4, 0)
+//       // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+//       // graphics.lineTo(-8, 0)
+//       //
+//       // graphics.moveTo(0, 4)
+//       // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+//       // graphics.lineTo(0, 8)
+//       //
+//       // graphics.moveTo(0, -4)
+//       // graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+//       // graphics.lineTo(0, -8)
+//     })
+//   }
+// }
+//
+// CursorSystem.queries = {
+//   entities: {
+//     components: [Cursor, Container]
+//   },
+//   input: {
+//     components: [InputState],
+//     mandatory: true
+//   },
+//   renderer: {
+//     components: [Renderer],
+//     mandatory: true
+//   }
+// }
 
 // export class BackgroundFadeSystem extends System {
 //   execute (delta, time) {
@@ -600,7 +614,7 @@ export class PectinBarRenderSystem extends System {
 
     this.queries.player.results.forEach(entity => {
       const player = entity.getMutableComponent(Player)
-      const playerContainer = entity.getMutableComponent(Container).container
+      const playerContainer = entity.getComponent(Container).container
 
       if (player.pectin === 0) {
         player.pectin--
@@ -654,6 +668,146 @@ PectinBarRenderSystem.queries = {
   }
 }
 
+export class UpgradeBarSystem extends System {
+  execute (delta, time) {
+    const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
+    const graphics = this.queries.renderer.results[0].getComponent(Container).container
+
+    this.queries.player.results.forEach(entity => {
+      const player = entity.getMutableComponent(Player)
+      const playerContainer = entity.getComponent(Container).container
+
+      if (player.upgradeProgress >= player.maxUpgradeProgress) {
+        player.upgradeProgress = 0
+        player.maxUpgradeProgress += UTILS.clamp(Math.round(player.maxUpgradeProgress / 2), 1, 7)
+
+        let upgraded = false
+
+        while (!upgraded) {
+          const diceRoll = Math.round(Math.random() * 3)
+
+          if (diceRoll === 0) {
+            if (!entity.hasComponent(TriShot)) {
+              entity.addComponent(TriShot)
+              if (entity.hasComponent(DoubleSided)) { //&& player.rounds < 10) {
+                entity.removeComponent(DoubleSided)
+              }
+              if (entity.hasComponent(ReflectLine)) {
+                entity.removeComponent(ReflectLine)
+              }
+              upgraded = true
+            }
+          } else if (diceRoll === 1) {
+            if (!entity.hasComponent(ReflectLine)) {
+              entity.addComponent(ReflectLine)
+              if (entity.hasComponent(TriShot)) { // && player.rounds < 10) {
+                entity.removeComponent(TriShot)
+              }
+              if (entity.hasComponent(DoubleSided)) {
+                entity.removeComponent(DoubleSided)
+              }
+              upgraded = true
+              // if (player.rounds >= 14) {
+              //   entity.addComponent(ReflectLine)
+              //   upgraded = true
+              // } else if ((!entity.hasComponent(TriShot) || !entity.hasComponent(DoubleSided))) {
+              //   entity.addComponent(DoubleSided)
+              //   upgraded = true
+              // }
+            }
+          } else if (diceRoll === 2) {
+            if (!entity.hasComponent(DoubleSided)) {
+              entity.addComponent(DoubleSided)
+              if (entity.hasComponent(TriShot)) { // && player.rounds < 10) {
+                entity.removeComponent(TriShot)
+              }
+              if (entity.hasComponent(ReflectLine)) {
+                entity.removeComponent(ReflectLine)
+              }
+              upgraded = true
+            }
+          } else if (diceRoll === 3) {
+            player.maxPectin = UTILS.clamp(player.maxPectin * 1.2, 25, 50)
+            upgraded = true
+          }
+        }
+
+        const width = (renderer.width / 2) - 6
+        graphics.beginFill(0xffffff)
+        graphics.drawRect(
+          renderer.width / 2,
+          2,
+          width,
+          (renderer.height / 16) - 4
+        )
+        graphics.drawRect(
+          (renderer.width / 2) - width,
+          2,
+          width,
+          (renderer.height / 16) - 4
+        )
+        graphics.endFill()
+
+        const smokeAmount = Math.round(UTILS.lerp(3, 7, Math.random()))
+
+        for (let j = 0; j < smokeAmount; j++) {
+          this.world.createEntity()
+            .addComponent(Smoke, {
+              x: playerContainer.position.x + (Math.random() * 16) - 8,
+              y: playerContainer.position.y + (Math.random() * 16) - 8,
+              vx: (Math.random() * 2 - 1) * (Math.random() * 12),
+              vy: (Math.random() * 2 - 1) * (Math.random() * 12),
+              scale: UTILS.lerp(8, 12, Math.random()),
+            })
+            .addComponent(Timer, {
+              duration: UTILS.lerp(4.5, 6.5, Math.random()),
+              time: 0
+            })
+        }
+
+        return
+      }
+
+      const width = UTILS.lerp(0, (renderer.width / 2) - 6, UTILS.inverseLerp(0, player.maxUpgradeProgress, player.upgradeProgress))//(player.pectin / player.maxPectin) * (renderer.width / 2)
+
+      if (width > 0) {
+        graphics.beginFill(0x0000ff, 0.5)
+        graphics.drawRect(
+          renderer.width / 2,
+          4,
+          width,
+          (renderer.height / 16) - 8
+        )
+        graphics.drawRect(
+          (renderer.width / 2) - width,
+          4,
+          width,
+          (renderer.height / 16) - 8
+        )
+        graphics.endFill()
+      }
+
+      graphics.beginFill(0xffffff, 0)
+      graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
+      graphics.moveTo(5, 4)
+      graphics.lineTo(5, (renderer.height / 16) - 4)
+      graphics.moveTo(renderer.width - 5, 4)
+      graphics.lineTo(renderer.width - 5, (renderer.height / 16) - 4)
+      graphics.endFill()
+    })
+  }
+}
+
+UpgradeBarSystem.queries = {
+  player: {
+    components: [Player, Container]
+  },
+  renderer: {
+    components: [Renderer, Container],
+    mandatory: true
+  }
+}
+
 export class SpawnShootersSystem extends System {
   execute (delta, time) {
     if (this.queries.shooters.results.length > 0) {
@@ -665,7 +819,7 @@ export class SpawnShootersSystem extends System {
 
     if (player.pectin < ((player.maxPectin / 3) * 2)) {
       // TODO: Make this number by pectin times emptied
-      for (let i = Math.ceil(Math.random() * 6); i > 0; i--) {
+      for (let i = Math.ceil(Math.random() * (player.rounds < 9 ? 6 : 9)); i > 0; i--) {
         const padding = renderer.width / 16
 
         let randomPositionX
@@ -696,22 +850,74 @@ export class SpawnShootersSystem extends System {
           continue
         }
 
-        this.world.createEntity()
-          .addComponent(Shooter, {
-            x: randomPositionX,
-            y: randomPositionY,
-            color: parseInt('0x' + UTILS.rgbToHex(255, 0, 0)),
-            radius: 6,
-            bulletCount: 6,
-            bulletSpeed: 48, // 128
-            bulletRadius: 3,
-            bulletLife: 3,
-            id: nanoid(),
-          })
-          .addComponent(Timer, {
-            duration: 1.5,
-            time: 0
-          })
+        const enemyType = Math.round(UTILS.lerp(0, UTILS.clamp(player.rounds, 0, 2.45), Math.random()))
+
+        if (enemyType === 0) {
+          this.world.createEntity()
+            .addComponent(Shooter, {
+              x: randomPositionX,
+              y: randomPositionY,
+              color: parseInt('0x' + UTILS.rgbToHex(255, 0, 0)),
+              radius: 6,
+              bulletCount: 6,
+              bulletSpeed: 48, // 128
+              bulletRadius: 3,
+              bulletLife: 3,
+              id: nanoid(),
+              angle: Math.PI / 2,
+              type: enemyType
+            })
+            .addComponent(Timer, {
+              duration: 1.5,
+              time: 0
+            })
+        } else if (enemyType === 1) {
+          this.world.createEntity()
+            .addComponent(Shooter, {
+              x: randomPositionX,
+              y: randomPositionY,
+              color: parseInt('0x' + UTILS.rgbToHex(255, 255, 0)),
+              radius: 5,
+              bulletCount: 4,
+              bulletSpeed: 32, // 128
+              bulletRadius: 2,
+              bulletLife: 3.5,
+              id: nanoid(),
+              health: 3,
+              type: enemyType,
+              cooldown: 1.2,
+              maxTimesShot: 4
+            })
+            .addComponent(Timer, {
+              duration: 0.2,
+              time: 0,
+              cooldown: 1,
+            })
+            .addComponent(Rotator, {
+              speed: -(((Math.PI / 2) / 2) - (Math.PI / 3))
+            })
+        } else if (enemyType === 2) {
+          this.world.createEntity()
+            .addComponent(Shooter, {
+              x: randomPositionX,
+              y: randomPositionY,
+              color: parseInt('0x' + UTILS.rgbToHex(0, 0, 255)),
+              radius: 5,
+              bulletCount: 2,
+              bulletSpeed: 52, // 128
+              bulletRadius: 3,
+              bulletLife: 4,
+              id: nanoid(),
+            })
+            .addComponent(Timer, {
+              duration: 0.8,
+              time: 0,
+              cooldown: 0.8
+            })
+            .addComponent(Rotator, {
+              speed: ((Math.PI / 2) / 2)
+            })
+        }
 
         const smokeAmount = Math.round(UTILS.lerp(3, 7, Math.random()))
 
@@ -757,17 +963,26 @@ export class UpdateShootersSystem extends System {
     const player = this.queries.player.results[0].getComponent(Player)
 
     this.queries.shooters.results.forEach(entity => {
-      const shooter = entity.getComponent(Shooter)
+      const shooter = entity.getMutableComponent(Shooter)
 
       if (player.pectin <= 0) {
         const timer = entity.getMutableComponent(Timer)
-        timer.time += delta
+        if (timer.cooldown <= 0) {
+          timer.time += delta
+        } else {
+          timer.cooldown -= delta
+        }
+
+        if (entity.hasComponent(Rotator)) {
+          const rotator = entity.getComponent(Rotator)
+          shooter.angle += rotator.speed * delta
+        }
 
         if (timer.time > timer.duration) {
           timer.time = 0
 
           for (let i = 0; i < shooter.bulletCount; i++) {
-            const angle = ((i / shooter.bulletCount) + 0.25) * Math.PI * 2 // Math.random()
+            const angle = ((i / shooter.bulletCount) * Math.PI * 2) + shooter.angle // Math.random()
             const x = shooter.x + (Math.cos(angle) * shooter.radius)
             const y = shooter.y + (Math.sin(angle) * shooter.radius)
 
@@ -784,6 +999,18 @@ export class UpdateShootersSystem extends System {
               .addComponent(Timer, {
                 duration: shooter.bulletLife,
               })
+              .addComponent(Rotator, {
+                speed: entity.hasComponent(Rotator) ? entity.getComponent(Rotator).speed : 0
+              })
+          }
+
+          if (shooter.maxTimesShot > 0) {
+            shooter.timesShot++
+
+            if (shooter.timesShot >= shooter.maxTimesShot) {
+              timer.cooldown = shooter.cooldown
+              shooter.timesShot = 0
+            }
           }
         }
       }
@@ -799,7 +1026,8 @@ export class UpdateShootersSystem extends System {
       graphics.lineStyle(1, 0xffffff, 1, 0.5, true)
       graphics.drawCircle(shooter.x, shooter.y, shooter.radius)
       for (let i = 0; i < shooter.bulletCount; i++) {
-        const angle = ((i / shooter.bulletCount) + 0.25) * Math.PI * 2
+        //const angle = ((i / shooter.bulletCount) + 0.25) * Math.PI * 2
+        const angle = ((i / shooter.bulletCount) * Math.PI * 2) + shooter.angle
         const x = shooter.x + (Math.cos(angle) * shooter.radius)
         const y = shooter.y + (Math.sin(angle) * shooter.radius)
         graphics.drawCircle(x, y, 1.5)
@@ -832,6 +1060,10 @@ export class UpdateBulletsSystem extends System {
 
     if (player.pectin > 0) {
       for (let i = this.queries.bullets.results.length - 1; i >= 0; i--) {
+        if (this.queries.bullets.results[i].hasComponent(PlayerBullet)) {
+          continue
+        }
+
         const entity = this.queries.bullets.results[i]
         const bullet = entity.getComponent(Bullet)
 
@@ -875,6 +1107,11 @@ export class UpdateBulletsSystem extends System {
       bullet.x += Math.cos(bullet.angle) * bullet.speed * delta
       bullet.y += Math.sin(bullet.angle) * bullet.speed * delta
 
+      if (entity.hasComponent(Rotator)) {
+        const rotator = entity.getComponent(Rotator)
+        bullet.angle += rotator.speed * delta
+      }
+
       graphics.beginFill(bullet.color, 1)
       graphics.drawCircle(bullet.x, bullet.y, bullet.radius * UTILS.lerp(1, 0.1, UTILS.inverseLerpClamped(timer.duration - 0.1, timer.duration, timer.time)))
       graphics.endFill()
@@ -902,6 +1139,7 @@ export class BulletsCollisionSystem extends System {
     //const renderer = this.queries.renderer.results[0].getComponent(Renderer)
     const playerContainer = this.queries.player.results[0].getComponent(Container).container
     const playerRadius = this.queries.player.results[0].getComponent(Player).radius
+    const playerEntity = this.queries.player.results[0]
 
     this.queries.playerBullets.results.forEach(entity => {
       const bullet = entity.getComponent(Bullet)
@@ -918,6 +1156,8 @@ export class BulletsCollisionSystem extends System {
           // TODO: Spawn smoke instead, or flash
           shooter.health--
           if (shooter.health <= 0) {
+            this.queries.player.results[0].getMutableComponent(Player).upgradeProgress++
+
             for (let j = this.queries.enemyBullets.results.length - 1; j >= 0; j--) {
               const enemyBullet = this.queries.enemyBullets.results[j].getComponent(Bullet)
               if (enemyBullet.parent === shooter.id) {
@@ -970,6 +1210,85 @@ export class BulletsCollisionSystem extends System {
       }
     })
 
+    // Player - Enemy collision check
+    for (let i = 0; i < this.queries.shooters.results.length; i++) {
+      const shooter = this.queries.shooters.results[i].getComponent(Shooter)
+
+      // playerRadius * 2
+      if (UTILS.circleCollision(playerContainer.position.x, playerContainer.position.y, shooter.radius, shooter.x, shooter.y, shooter.radius)) {
+        this.queries.player.results[0].getMutableComponent(Player).upgradeProgress += 3
+
+        // Spawn smoke
+        const smokeAmount = Math.round(UTILS.lerp(3, 7, Math.random()))
+
+        for (let j = 0; j < smokeAmount; j++) {
+          this.world.createEntity()
+            .addComponent(Smoke, {
+              x: shooter.x + (Math.random() * 16) - 8,
+              y: shooter.y + (Math.random() * 16) - 8,
+              vx: (Math.random() * 2 - 1) * (Math.random() * 12),
+              vy: (Math.random() * 2 - 1) * (Math.random() * 12),
+              scale: UTILS.lerp(4, 7, Math.random()),
+            })
+            .addComponent(Timer, {
+              duration: UTILS.lerp(2.5, 4.5, Math.random()),
+              time: 0
+            })
+        }
+
+        this.queries.shooters.results[i].remove()
+      }
+    }
+
+    // Enemy bullet - Player's Solid Line ability check
+    if (playerEntity.hasComponent(ReflectLine)) {
+      const linePoints = []
+
+      this.queries.points.results.forEach(entity => {
+        const line = entity.getMutableComponent(LinePoint)
+
+        linePoints.push(
+          line.x,
+          line.y
+        )
+      })
+
+      for (let i = 0; i < linePoints.length - 2; i += 2) {
+        for (let j = this.queries.enemyBullets.results.length - 1; j >= 0; j--) {
+          const bullet = this.queries.enemyBullets.results[j].getComponent(Bullet)
+
+          if (UTILS.lineCircleCollision(linePoints[i], linePoints[i + 1], linePoints[i + 2], linePoints[i + 3], bullet.x, bullet.y, bullet.radius / 2)) {
+            // this.queries.enemyBullets.results[j].getMutableComponent(Timer).duration = 12
+            // this.queries.enemyBullets.results[j].addComponent(PlayerBullet)
+            // bullet.color = 0xffffff
+            // bullet.angle = UTILS.reflectRadiant(bullet.angle)
+            // bullet.parent = ''
+            //const lineNormal = UTILS.getNormalOfLine2(linePoints[i], linePoints[i + 1], linePoints[i + 2], linePoints[i + 3])
+            //const sideOfLine = -UTILS.getSideOfLine(linePoints[i], linePoints[i + 1], linePoints[i + 2], linePoints[i + 3], bullet.x, bullet.y)
+            //const reflectedAngle = Math.atan2(lineNormal.y * sideOfLine, lineNormal.x * sideOfLine)
+            const bulletAngle = UTILS.reflectRadiant(bullet.angle)
+            this.world.createEntity()
+              .addComponent(Bullet, {
+                x: bullet.x,
+                y: bullet.y,
+                angle: bulletAngle,
+                color: 0xffffff,
+                radius: bullet.radius,
+                speed: bullet.speed,
+              })
+              .addComponent(Timer, {
+                duration: 12,
+                time: 0
+              })
+              .addComponent(PlayerBullet)
+
+            this.queries.enemyBullets.results[j].remove()
+          }
+        }
+      }
+    }
+
+    // Player - Enemy bullet collision check
     let gameOver = false
 
     this.queries.enemyBullets.results.forEach(entity => {
@@ -1010,35 +1329,9 @@ export class BulletsCollisionSystem extends System {
       }
     })
 
-    if (gameOver) {
-      return
-    }
-
-    for (let i = 0; i < this.queries.shooters.results.length; i++) {
-      const shooter = this.queries.shooters.results[i].getComponent(Shooter)
-
-      if (UTILS.circleCollision(playerContainer.position.x, playerContainer.position.y, playerRadius * 2, shooter.x, shooter.y, shooter.radius)) {
-        // Spawn smoke
-        const smokeAmount = Math.round(UTILS.lerp(3, 7, Math.random()))
-
-        for (let j = 0; j < smokeAmount; j++) {
-          this.world.createEntity()
-            .addComponent(Smoke, {
-              x: shooter.x + (Math.random() * 16) - 8,
-              y: shooter.y + (Math.random() * 16) - 8,
-              vx: (Math.random() * 2 - 1) * (Math.random() * 12),
-              vy: (Math.random() * 2 - 1) * (Math.random() * 12),
-              scale: UTILS.lerp(4, 7, Math.random()),
-            })
-            .addComponent(Timer, {
-              duration: UTILS.lerp(2.5, 4.5, Math.random()),
-              time: 0
-            })
-        }
-
-        this.queries.shooters.results[i].remove()
-      }
-    }
+    // if (gameOver) {
+    //   return
+    // }
   }
 }
 
@@ -1046,6 +1339,9 @@ BulletsCollisionSystem.queries = {
   player: {
     components: [Player, Container, Not(GameOver)],
     mandatory: true
+  },
+  points: {
+    components: [LinePoint, Not(Removing)]
   },
   shooters: {
     components: [Shooter]
@@ -1079,22 +1375,101 @@ export class PlayerShootSystem extends System {
       playerTimer.time += delta
       if (playerTimer.time >= playerTimer.duration) {
         playerTimer.time = 0
-        //if (player.ammo > 0) {
-        //player.ammo--
-        this.world.createEntity()
-          .addComponent(Bullet, {
-            x: playerContainer.position.x,
-            y: playerContainer.position.y,
-            angle: playerContainer.rotation,
-            speed: 240,
-            radius: 2,
-            color: 0xffffff
-          })
-          .addComponent(Timer, {
-            duration: 12
-          })
-          .addComponent(PlayerBullet)
-        //}
+        if (this.queries.player.results[0].hasComponent(DoubleSided)) {
+          if (this.queries.player.results[0].hasComponent(TriShot)) {
+            for (let i = 0; i < 3; i++) {
+              this.world.createEntity()
+                .addComponent(Bullet, {
+                  x: playerContainer.position.x,
+                  y: playerContainer.position.y,
+                  angle: playerContainer.rotation + (i - 1) * (Math.PI / 12),
+                  speed: 240,
+                  radius: 2,
+                  color: 0xffffff
+                })
+                .addComponent(PlayerBullet)
+                .addComponent(Timer, {
+                  duration: 12,
+                  time: 0
+                })
+              this.world.createEntity()
+                .addComponent(Bullet, {
+                  x: playerContainer.position.x,
+                  y: playerContainer.position.y,
+                  angle: (playerContainer.rotation + (i - 1) * (Math.PI / 12)) + Math.PI,
+                  speed: 240,
+                  radius: 2,
+                  color: 0xffffff
+                })
+                .addComponent(PlayerBullet)
+                .addComponent(Timer, {
+                  duration: 12,
+                  time: 0
+                })
+            }
+          } else {
+            this.world.createEntity()
+              .addComponent(Bullet, {
+                x: playerContainer.position.x,
+                y: playerContainer.position.y,
+                angle: playerContainer.rotation,
+                speed: 240,
+                radius: 2,
+                color: 0xffffff
+              })
+              .addComponent(Timer, {
+                duration: 12
+              })
+              .addComponent(PlayerBullet)
+
+            this.world.createEntity()
+              .addComponent(Bullet, {
+                x: playerContainer.position.x,
+                y: playerContainer.position.y,
+                angle: playerContainer.rotation + Math.PI,
+                speed: 240,
+                radius: 2,
+                color: 0xffffff
+              })
+              .addComponent(Timer, {
+                duration: 12
+              })
+              .addComponent(PlayerBullet)
+          }
+        } else {
+          if (this.queries.player.results[0].hasComponent(TriShot)) {
+            for (let i = 0; i < 3; i++) {
+              this.world.createEntity()
+                .addComponent(Bullet, {
+                  x: playerContainer.position.x,
+                  y: playerContainer.position.y,
+                  angle: playerContainer.rotation + (i - 1) * (Math.PI / 12),
+                  speed: 240,
+                  radius: 2,
+                  color: 0xffffff
+                })
+                .addComponent(PlayerBullet)
+                .addComponent(Timer, {
+                  duration: 12,
+                  time: 0
+                })
+            }
+          } else {
+            this.world.createEntity()
+              .addComponent(Bullet, {
+                x: playerContainer.position.x,
+                y: playerContainer.position.y,
+                angle: playerContainer.rotation,
+                speed: 240,
+                radius: 2,
+                color: 0xffffff
+              })
+              .addComponent(Timer, {
+                duration: 12
+              })
+              .addComponent(PlayerBullet)
+          }
+        }
       }
     } else if (input.attack.up) {
       playerTimer.time = playerTimer.duration
@@ -1171,6 +1546,7 @@ export class GameTimerSystem extends System {
 
       player.pectin = player.maxPectin
       player.currentLineIndex = -1
+      player.rounds++
 
       for (let i = this.queries.points.results.length - 1; i > -1; i--) {
         this.queries.points.results[i]
@@ -1180,6 +1556,8 @@ export class GameTimerSystem extends System {
 
       this.queries.shooters.results.forEach(entity => {
         entity.getMutableComponent(Timer).time = 0
+        entity.getMutableComponent(Timer).cooldown = entity.getComponent(Shooter).cooldown
+        entity.getMutableComponent(Shooter).timesShot = 0
       })
 
       this.world.createEntity()
@@ -1310,6 +1688,7 @@ export class RenderGameOverSystem extends System {
     const renderer = this.queries.renderer.results[0].getComponent(Renderer).renderer
     const gameOver = this.queries.player.results[0].getMutableComponent(GameOver)
     const player = this.queries.player.results[0].getMutableComponent(Player)
+    const playerEntity = this.queries.player.results[0]
     const playerContainer = this.queries.player.results[0].getComponent(Container).container
 
     // White background
@@ -1398,6 +1777,21 @@ export class RenderGameOverSystem extends System {
           // TODO: Reset abilities here
           player.pectin = player.maxPectin
           player.currentLineIndex = -1
+          player.rounds = 0
+          player.maxPectin = 25
+          player.maxUpgradeProgress = 9
+          player.upgradeProgress = 0
+          if (playerEntity.hasComponent(TriShot)) {
+            playerEntity.removeComponent(TriShot)
+          }
+          if (playerEntity.hasComponent(DoubleSided)) {
+            playerEntity.removeComponent(DoubleSided)
+          }
+          if (playerEntity.hasComponent(ReflectLine)) {
+            playerEntity.removeComponent(ReflectLine)
+          }
+          playerContainer.x = renderer.width / 2
+          playerContainer.y = renderer.height / 2
           this.queries.gameTimer.results[0].getMutableComponent(Timer).time = 0
           this.world.createEntity(LinePoint, {
             x: playerContainer.x,
@@ -1712,9 +2106,9 @@ export class TouchSystem extends System {
         }
 
         if (!touch.states[button].checked) {
-            touch.states[button].down = true
-            touch.states[button].held = true
-            touch.states[button].checked = true
+          touch.states[button].down = true
+          touch.states[button].held = true
+          touch.states[button].checked = true
         } else {
           touch.states[button].down = false
         }
@@ -1754,7 +2148,7 @@ export class TouchSystem extends System {
             pollUp += touch.states[button].up ? 1 : 0
 
             const timer = entity.getMutableComponent(Timer)
-            
+
             if (pollHeld > 0 && this.queries.player.results[0].getComponent(Player).pectin <= 0) {
               timer.time += delta
 
@@ -1762,7 +2156,7 @@ export class TouchSystem extends System {
                 return
               }
             }
-            
+
             if (pollUp > 0) {
               timer.time = 0
             }

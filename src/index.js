@@ -24,6 +24,7 @@ import * as SYSTEMS from './systems'
 
 Object.entries(SYSTEMS).forEach(([name, exported]) => window[name] = exported)
 import * as PIXI from './pixi'
+import { UpgradeBarSystem } from './systems'
 
 let world, stage, renderer, ticker, elapsedTime
 
@@ -45,7 +46,7 @@ function init () {
     .registerComponent(Timer)
     .registerComponent(LinePoint)
     .registerComponent(MainStage)
-    .registerComponent(Cursor)
+    //.registerComponent(Cursor)
     .registerComponent(Removing)
     .registerComponent(Shooter)
     .registerComponent(Bullet)
@@ -54,6 +55,10 @@ function init () {
     .registerComponent(GameOver)
     .registerComponent(PlayerBullet)
     .registerComponent(FrameFlash)
+    .registerComponent(Rotator)
+    .registerComponent(TriShot)
+    .registerComponent(DoubleSided)
+    .registerComponent(ReflectLine)
   
   world
     .registerSystem(ResetInputSystem)
@@ -63,7 +68,7 @@ function init () {
     .registerSystem(FinalizeInputSystem)
     .registerSystem(ClearGraphicsSystem)
     .registerSystem(ContainerAddSystem)
-    .registerSystem(CursorSystem)
+    //.registerSystem(CursorSystem)
     .registerSystem(PlayerMovementSystem)
     .registerSystem(PlayerShootSystem)
     .registerSystem(SpawnShootersSystem)
@@ -73,6 +78,7 @@ function init () {
     .registerSystem(UpdateShootersSystem)
     .registerSystem(UpdateBulletsSystem)
     .registerSystem(BulletsCollisionSystem)
+    .registerSystem(UpgradeBarSystem)
     .registerSystem(SmokeSystem)
     .registerSystem(GameTimerSystem)
     .registerSystem(PectinBarRenderSystem)
@@ -121,6 +127,14 @@ function init () {
   world.createEntity('main stage')
     .addComponent(Container, { container: stage })
     .addComponent(MainStage)
+  
+  // world.createEntity('text')
+  //   .addComponent(Text, {
+  //     text: 'Hello  22! Test text',
+  //     x: 320 / 2,
+  //     y: (240 / 2) - 50,
+  //     scale: 0.6
+  //   })
 
   const player = new PIXI.Graphics()
   // player.width = 16
@@ -133,6 +147,9 @@ function init () {
     .addComponent(Container, { container: player })
     .addComponent(Player, { lastPlop: player.position.clone() })
     .addComponent(Timer, { duration: 1 / 12 })
+    //.addComponent(TriShot)
+    //.addComponent(DoubleSided)
+    //.addComponent(ReflectLine)
 
   world.createEntity("game timer")
     .addComponent(GameTimer)
